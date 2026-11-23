@@ -28,6 +28,12 @@
       .print-card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #cbd5e1 !important; }
     }
   </style>
+  <meta name="theme-color" content="#059669" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="icon" type="image/png" href="icon-192.png" />
 </head>
 <body class="min-h-screen pb-28">
 
@@ -1534,6 +1540,9 @@
       renderStoreGrid();
       updateCartBadges();
       lucide.createIcons();
+      if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        try { navigator.serviceWorker.register('./sw.js'); } catch (e) {}
+      }
     });
   </script>
 </body>
