@@ -1,6 +1,6 @@
 {
-  "name": "مجهّز أوردرات DTF",
-  "short_name": "أوردرات DTF",
+  "name": "Work",
+  "short_name": "Work",
   "description": "تجهيز كروت أوردرات الطباعة بالطلب للواتساب",
   "start_url": "./",
   "scope": "./",
