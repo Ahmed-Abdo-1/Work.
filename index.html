@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>مجهّز أوردرات DTF — كارت موحّد لكل عميل</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800;900&display=swap');
+    body {
+      font-family: 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .modal-enter { animation: fadeSlideUp 0.18s ease-out; }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #ffffff; }
+      .print-grid { display: grid !important; grid-template-columns: repeat(1, 1fr) !important; gap: 16px !important; }
+      .print-card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #cbd5e1 !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-28">
+
+  <!-- Top Header -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 no-print">
+    <div class="max-w-5xl mx-auto px-3 sm:px-5 py-3 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <i data-lucide="printer" class="w-5 h-5"></i>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-base sm:text-lg font-extrabold text-slate-900 truncate">مجهّز أوردرات DTF</h1>
+          <p class="text-xs text-slate-500 truncate">كارت واحد بالعرض لكل عميل جاهز للواتساب</p>
+        </div>
+      </div>
+
+      <button id="openCartBtn" type="button" class="relative inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 active:scale-95 transition shrink-0">
+        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+        <span class="hidden sm:inline">سلة العميل</span>
+        <span id="headerCartBadge" class="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-emerald-500 text-white text-xs font-extrabold">0</span>
+      </button>
+    </div>
+
+    <!-- Single-Line 3-Tab Navigation -->
+    <nav class="max-w-5xl mx-auto px-3 sm:px-5 pb-2.5 flex gap-1.5" aria-label="الأقسام">
+      <button type="button" data-tab="store" class="tab-btn flex-1 py-2 px-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition bg-emerald-600 text-white shadow-sm">
+        <i data-lucide="layout-grid" class="w-4 h-4 shrink-0"></i>
+        <span class="truncate">التصميمات</span>
+      </button>
+      <button type="button" data-tab="orders" class="tab-btn flex-1 py-2 px-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition bg-slate-100 text-slate-700 hover:bg-slate-200">
+        <i data-lucide="send" class="w-4 h-4 shrink-0"></i>
+        <span class="truncate">أوردرات اليوم</span>
+        <span id="ordersTabBadge" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-slate-200 text-slate-800 text-[11px] font-extrabold">0</span>
+      </button>
+      <button type="button" data-tab="library" class="tab-btn flex-1 py-2 px-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition bg-slate-100 text-slate-700 hover:bg-slate-200">
+        <i data-lucide="images" class="w-4 h-4 shrink-0"></i>
+        <span class="truncate">الإدارة</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-5xl mx-auto px-3 sm:px-5 pt-4">
+
+    <!-- TAB 1: STORE (QUICK ORDER PICKER) -->
+    <section id="tab-store" class="space-y-4">
+      <!-- Search & Active Customer Quick Bar -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+        <div class="relative md:col-span-6">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2"></i>
+          <input id="designSearchInput" type="text" placeholder="ابحث برقم أو اسم التصميم (مثلاً 1 أو تصميم 1)..." class="w-full pr-10 pl-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition" />
+        </div>
+        <div class="relative md:col-span-6">
+          <i data-lucide="user" class="w-4 h-4 text-emerald-600 absolute right-3.5 top-1/2 -translate-y-1/2"></i>
+          <input id="quickCustomerInput" type="text" placeholder="اسم العميل الحالي (تقدر تكتبه دلوقتي أو عند تأكيد السلة)..." class="w-full pr-10 pl-3 py-2.5 rounded-xl border border-emerald-200 bg-emerald-50/50 text-sm font-bold text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition" />
+        </div>
+      </div>
+
+      <!-- Designs Grid -->
+      <div id="storeDesignsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4"></div>
+
+      <!-- Empty Search State -->
+      <div id="storeEmptyState" class="hidden bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+        <p class="text-slate-600 font-bold mb-2">لا توجد تصميمات مفعّلة مطابقة للبحث</p>
+        <button id="clearSearchBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800">عرض كل التصميمات</button>
+      </div>
+    </section>
+
+    <!-- TAB 2: TODAY'S ORDERS (ONE COMBINED HORIZONTAL CARD PER CUSTOMER) -->
+    <section id="tab-orders" class="hidden space-y-4">
+      <!-- Top Action Bar -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
+        <div>
+          <h2 class="text-base font-extrabold text-slate-900">أوردرات اليوم</h2>
+          <p class="text-xs text-slate-500 mt-0.5">كارت واحد بالعرض لكل عميل باسمه مرة واحدة</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="shareAllImagesBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 text-white text-xs sm:text-sm font-bold hover:bg-emerald-700 active:scale-95 transition shadow-sm">
+            <i data-lucide="share-2" class="w-4 h-4"></i>
+            <span>مشاركة كل أوردرات اليوم</span>
+          </button>
+          <button id="downloadAllImagesBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-bold hover:bg-slate-800 active:scale-95 transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>تحميل الكل</span>
+          </button>
+          <button id="printSheetBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs sm:text-sm font-bold hover:bg-slate-200 transition">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>طباعة / PDF</span>
+          </button>
+          <button id="clearOrdersBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-rose-50 text-rose-700 text-xs sm:text-sm font-bold hover:bg-rose-100 transition">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>تصفير اليوم</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty Orders State -->
+      <div id="ordersEmptyState" class="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center no-print">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
+          <i data-lucide="inbox" class="w-7 h-7"></i>
+        </div>
+        <h3 class="text-base font-extrabold text-slate-800">لسه مفيش أوردرات متضافة النهارده</h3>
+        <p class="text-xs text-slate-500 mt-1 mb-4">اختار قطع العميل من تبويب "التصميمات" وأكّد السلة، وهيتعمله كارت واحد بالعرض جاهز للواتساب فوراً.</p>
+        <button id="goToStoreBtn" type="button" class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition">ابدأ إضافة أول أوردر</button>
+      </div>
+
+      <!-- Rendered Customer Order Cards Grid -->
+      <div id="ordersCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 print-grid"></div>
+    </section>
+
+    <!-- TAB 3: DESIGN LIBRARY MANAGER -->
+    <section id="tab-library" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900">إضافة تصميم جديد</h2>
+            <p class="text-xs text-slate-500 mt-0.5">حدد الرقم واسم التصميم (مثلاً: تصميم 1) واختار دايرة اللون، وتقدر تعدّل أو تحذف أي تصميم في أي وقت</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button id="exportBackupBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>حفظ نسخة احتياطية</span>
+            </button>
+            <label for="importBackupInput" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition cursor-pointer">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+              <span>استعادة نسخة</span>
+              <input id="importBackupInput" type="file" accept=".json,application/json" class="hidden" />
+            </label>
+            <button id="resetSamplesBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>نماذج تجريبية</span>
+            </button>
+          </div>
+        </div>
+
+        <form id="addDesignForm" class="space-y-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-2">
+              <label for="newDesignCode" class="block text-xs font-bold text-slate-700 mb-1">الرقم (#) *</label>
+              <input id="newDesignCode" type="text" placeholder="1" required class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-black focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white" />
+            </div>
+            <div class="sm:col-span-5">
+              <label for="newDesignName" class="block text-xs font-bold text-slate-700 mb-1">اسم التصميم (اختياري — افتراضياً: تصميم + الرقم)</label>
+              <input id="newDesignName" type="text" placeholder="مثلاً: تصميم 1" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white" />
+            </div>
+            <div class="sm:col-span-5">
+              <label for="newDesignFiles" class="block text-xs font-bold text-slate-700 mb-1">صورة التصميم *</label>
+              <input id="newDesignFiles" type="file" accept="image/*" multiple required class="block w-full text-xs text-slate-600 file:ml-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border border-slate-200 rounded-xl bg-slate-50 p-1" />
+            </div>
+          </div>
+
+          <!-- Visual Color Swatch Picker (Circle Only) -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+            <div>
+              <span class="block text-xs font-bold text-slate-700 mb-1.5">اختار لون الدايرة للتصميم:</span>
+              <div id="newColorSwatches" class="flex flex-wrap items-center gap-2"></div>
+            </div>
+            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 active:scale-95 transition shrink-0">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>إضافة للمكتبة</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Library List -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 class="text-sm font-extrabold text-slate-900">كل تصميماتك (<span id="libraryCount">0</span>)</h3>
+          <span class="text-[11px] text-slate-500 font-semibold">تقدر تعدل الرقم أو الاسم أو اللون، أو توقف أو تحذف أي تصميم</span>
+        </div>
+        <div id="libraryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating Bottom Cart Bar -->
+  <div id="floatingCartBar" class="hidden fixed bottom-3 left-3 right-3 z-30 max-w-2xl mx-auto no-print">
+    <button id="floatingCartBtn" type="button" class="w-full bg-slate-900 text-white rounded-2xl p-3.5 shadow-xl border border-slate-700 flex items-center justify-between gap-3 hover:bg-slate-800 active:scale-[0.99] transition">
+      <div class="flex items-center gap-3">
+        <span id="floatingCartCount" class="w-9 h-9 rounded-xl bg-emerald-500 text-white font-black text-base flex items-center justify-center">0</span>
+        <div class="text-right">
+          <div id="floatingCartTitle" class="text-sm font-extrabold">سلة العميل الحالي</div>
+          <div id="floatingCartSummary" class="text-xs text-slate-300 truncate max-w-[200px] sm:max-w-sm">اضغط لتأكيد أوردر العميل</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-1 text-emerald-400 font-extrabold text-sm shrink-0">
+        <span>تأكيد الأوردر</span>
+        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+      </div>
+    </button>
+  </div>
+
+  <!-- MODAL 1: FAST SIZE PICKER -->
+  <div id="pickerModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 no-print">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col modal-enter">
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <img id="pickerImg" src="" alt="صورة التصميم" class="w-16 h-16 rounded-xl object-contain bg-slate-100 border border-slate-200 p-1 shrink-0" />
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span id="pickerCodeBadge" class="inline-block px-2 py-0.5 rounded-md bg-slate-900 text-white text-xs font-black">#1</span>
+              <span id="pickerColorDot" class="w-4 h-4 rounded-full border-2 border-slate-400 inline-block shrink-0"></span>
+            </div>
+            <h3 id="pickerName" class="text-sm font-extrabold text-slate-900 truncate mt-1">تصميم 1</h3>
+          </div>
+        </div>
+        <button id="closePickerBtn" type="button" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center shrink-0">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-4">
+        <div>
+          <label class="block text-xs font-extrabold text-slate-700 mb-2">اختار المقاس</label>
+          <div id="sizeOptions" class="grid grid-cols-3 gap-2"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
+          <div class="sm:col-span-5">
+            <label class="block text-xs font-extrabold text-slate-700 mb-1.5">العدد</label>
+            <div class="flex items-center justify-between border border-slate-200 rounded-xl bg-slate-50 p-1">
+              <button id="qtyMinusBtn" type="button" class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-800 font-black text-lg flex items-center justify-center hover:bg-slate-100 active:scale-95">-</button>
+              <span id="pickerQtyVal" class="text-base font-black text-slate-900">1</span>
+              <button id="qtyPlusBtn" type="button" class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-800 font-black text-lg flex items-center justify-center hover:bg-slate-100 active:scale-95">+</button>
+            </div>
+          </div>
+          <div class="sm:col-span-7">
+            <label for="pickerNoteInput" class="block text-xs font-extrabold text-slate-700 mb-1.5">ملاحظة للصنايعي (اختياري)</label>
+            <input id="pickerNoteInput" type="text" placeholder="مثلاً: طباعة ظهر" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white" />
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex gap-2">
+        <button id="addToCartConfirmBtn" type="button" class="flex-1 py-3 px-4 rounded-xl bg-emerald-600 text-white text-sm font-extrabold hover:bg-emerald-700 active:scale-[0.98] transition flex items-center justify-center gap-2 shadow-sm">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+          <span>إضافة لسلة العميل</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CUSTOMER CART (HORIZONTAL SIDE-BY-SIDE ITEMS) -->
+  <div id="cartModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 no-print">
+    <div class="bg-white w-full sm:max-w-xl rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col modal-enter">
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900">سلة العميل الحالي</h3>
+          <p class="text-xs text-slate-500">كل القطع دي هتتجمع في كارت واحد بالعرض باسم العميل مرة واحدة</p>
+        </div>
+        <button id="closeCartBtn" type="button" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-4">
+        <div id="cartItemsList" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5"></div>
+
+        <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200 space-y-3">
+          <div>
+            <label for="customerNameInput" class="block text-xs font-extrabold text-slate-800 mb-1">اسم العميل (بيظهر مرة واحدة بس على الكارت) *</label>
+            <input id="customerNameInput" type="text" placeholder="مثلاً: محمد أحمد علي" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div>
+            <label for="customerRefInput" class="block text-xs font-bold text-slate-600 mb-1">آخر 4 أرقام موبايل أو رقم البوليصة (اختياري)</label>
+            <input id="customerRefInput" type="text" placeholder="مثلاً: 4821" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 bg-white flex gap-2">
+        <button id="addMoreItemsBtn" type="button" class="px-4 py-3 rounded-xl bg-slate-100 text-slate-800 text-xs sm:text-sm font-bold hover:bg-slate-200 transition">
+          + قطعة كمان
+        </button>
+        <button id="confirmCustomerOrderBtn" type="button" class="flex-1 py-3 px-4 rounded-xl bg-emerald-600 text-white text-sm font-extrabold hover:bg-emerald-700 active:scale-[0.98] transition flex items-center justify-center gap-2 shadow-sm">
+          <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+          <span>تجهيز كارت العميل</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: EDIT EXISTING DESIGN IN LIBRARY -->
+  <div id="editDesignModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 no-print">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col modal-enter">
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-slate-900">تعديل بيانات التصميم</h3>
+        <button id="closeEditDesignBtn" type="button" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form id="editDesignForm" class="p-4 overflow-y-auto space-y-3.5">
+        <input id="editDesignId" type="hidden" />
+        <div class="flex items-center gap-3">
+          <img id="editDesignPreview" src="" alt="" class="w-16 h-16 rounded-xl object-contain bg-slate-50 border border-slate-200 p-1 shrink-0" />
+          <div class="flex-1">
+            <label for="editDesignFile" class="block text-xs font-bold text-slate-700 mb-1">تغيير الصورة (اختياري)</label>
+            <input id="editDesignFile" type="file" accept="image/*" class="block w-full text-xs text-slate-600 file:ml-2 file:py-1.5 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="editDesignCode" class="block text-xs font-bold text-slate-700 mb-1">الرقم (#) *</label>
+            <input id="editDesignCode" type="text" required class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-black focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white" />
+          </div>
+          <div>
+            <label for="editDesignName" class="block text-xs font-bold text-slate-700 mb-1">اسم التصميم *</label>
+            <input id="editDesignName" type="text" required class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white" />
+          </div>
+        </div>
+        <div>
+          <span class="block text-xs font-bold text-slate-700 mb-1.5">لون الدايرة:</span>
+          <div id="editColorSwatches" class="flex flex-wrap items-center gap-2"></div>
+        </div>
+        <div class="pt-2 flex gap-2">
+          <button type="submit" class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 text-white text-sm font-extrabold hover:bg-emerald-700 transition">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: CONFIRM DIALOG -->
+  <div id="confirmDialog" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 no-print">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl modal-enter">
+      <h3 id="confirmTitle" class="text-base font-extrabold text-slate-900 mb-1.5">تأكيد</h3>
+      <p id="confirmMessage" class="text-sm text-slate-600 mb-5">هل أنت متأكد؟</p>
+      <div class="flex gap-2 justify-end">
+        <button id="confirmCancelBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200">إلغاء</button>
+        <button id="confirmOkBtn" type="button" class="px-4 py-2 rounded-xl bg-rose-600 text-white text-sm font-bold hover:bg-rose-700">تأكيد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs sm:text-sm font-bold flex items-center gap-2 max-w-[92vw] no-print">
+    <span id="toastText">تم بنجاح</span>
+  </div>
+
+  <script>
+    // ---------- Sample Clean Numbered Designs (No Character Names) ----------
+    function makeSampleSvg(bg, accent, num) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+        <rect width="600" height="600" rx="48" fill="${bg}"/>
+        <circle cx="300" cy="270" r="160" fill="${accent}" opacity="0.22"/>
+        <circle cx="300" cy="270" r="120" fill="none" stroke="${accent}" stroke-width="12" stroke-dasharray="22 14"/>
+        <text x="300" y="305" text-anchor="middle" font-size="115" font-weight="900" fill="#ffffff" font-family="sans-serif">#${num}</text>
+        <rect x="140" y="465" width="320" height="64" rx="32" fill="${accent}"/>
+        <text x="300" y="507" text-anchor="middle" font-size="30" font-weight="bold" fill="#ffffff" font-family="sans-serif">DESIGN ${num}</text>
+      </svg>`;
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    const COLOR_SWATCHES = [
+      { id: 'black', hex: '#111827', border: '#111827', label: 'أسود' },
+      { id: 'white', hex: '#ffffff', border: '#94a3b8', label: 'أبيض' },
+      { id: 'beige', hex: '#d6c3a5', border: '#a89274', label: 'بيج' },
+      { id: 'offwhite', hex: '#f5f0e6', border: '#cbd5e1', label: 'أوف وايت' },
+      { id: 'gray', hex: '#9ca3af', border: '#6b7280', label: 'رمادي' },
+      { id: 'navy', hex: '#1e3a8a', border: '#1e3a8a', label: 'كحلي' },
+      { id: 'olive', hex: '#3f6212', border: '#3f6212', label: 'زيتي' },
+      { id: 'brown', hex: '#78350f', border: '#78350f', label: 'بني' },
+      { id: 'burgundy', hex: '#881337', border: '#881337', label: 'نبيتي' },
+      { id: 'red', hex: '#dc2626', border: '#dc2626', label: 'أحمر' },
+      { id: 'blue', hex: '#2563eb', border: '#2563eb', label: 'أزرق' }
+    ];
+
+    const SIZES = ['S', 'M', 'L', 'XL', '2XL'];
+
+    const DEFAULT_DESIGNS = [
+      { id: 'd1', code: '1', name: 'تصميم 1', colorHex: '#111827', active: true, image: makeSampleSvg('#0f172a', '#10b981', '1') },
+      { id: 'd2', code: '2', name: 'تصميم 2', colorHex: '#ffffff', active: true, image: makeSampleSvg('#1e293b', '#ef4444', '2') },
+      { id: 'd3', code: '3', name: 'تصميم 3', colorHex: '#d6c3a5', active: true, image: makeSampleSvg('#451a03', '#d97706', '3') },
+      { id: 'd4', code: '4', name: 'تصميم 4', colorHex: '#3f6212', active: true, image: makeSampleSvg('#14532d', '#22c55e', '4') },
+      { id: 'd5', code: '5', name: 'تصميم 5', colorHex: '#1e3a8a', active: true, image: makeSampleSvg('#0c4a6e', '#38bdf8', '5') },
+      { id: 'd6', code: '6', name: 'تصميم 6', colorHex: '#f5f0e6', active: true, image: makeSampleSvg('#18181b', '#e11d48', '6') }
+    ];
+
+    const STORAGE_KEYS = {
+      designs: 'pod_dtf_designs_v3',
+      orders: 'pod_dtf_orders_v3'
+    };
+
+    // ---------- App State ----------
+    let state = {
+      activeTab: 'store',
+      searchQuery: '',
+      currentCustomerName: '',
+      selectedNewColorHex: '#111827',
+      selectedEditColorHex: '#111827',
+      designs: [],
+      cart: [],
+      orders: [],
+      picker: {
+        designId: null,
+        size: 'L',
+        isCustomSize: false,
+        customSizeText: '',
+        qty: 1,
+        note: ''
+      }
+    };
+
+    let confirmCallback = null;
+    let toastTimer = null;
+
+    // ---------- Storage Helpers ----------
+    function resolveColorHex(d) {
+      if (d.colorHex) return d.colorHex;
+      if (d.color) {
+        const match = COLOR_SWATCHES.find(c => c.label === d.color || c.hex === d.color);
+        if (match) return match.hex;
+      }
+      return '#111827';
+    }
+
+    function normalizeDesign(d) {
+      const code = String(d.code || '1');
+      return {
+        id: d.id || ('d_' + Math.random().toString(36).slice(2, 8)),
+        code,
+        name: d.name || `تصميم ${code}`,
+        colorHex: resolveColorHex(d),
+        active: d.active !== false,
+        image: d.image
+      };
+    }
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEYS.designs);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          state.designs = Array.isArray(parsed) && parsed.length ? parsed.map(normalizeDesign) : [...DEFAULT_DESIGNS];
+        } else {
+          state.designs = [...DEFAULT_DESIGNS];
+        }
+      } catch (e) {
+        state.designs = [...DEFAULT_DESIGNS];
+      }
+
+      try {
+        const savedOrders = localStorage.getItem(STORAGE_KEYS.orders);
+        if (savedOrders) {
+          const parsed = JSON.parse(savedOrders);
+          state.orders = Array.isArray(parsed) ? parsed : [];
+        }
+      } catch (e) {
+        state.orders = [];
+      }
+    }
+
+    function saveDesigns() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.designs, JSON.stringify(state.designs));
+      } catch (e) {
+        showToast('مساحة التخزين ممتلئة — استخدم "حفظ نسخة احتياطية" للاحتفاظ بالتصميمات');
+      }
+    }
+
+    function saveOrders() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(state.orders));
+      } catch (e) {}
+    }
+
+    // ---------- UI Helpers ----------
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastText').textContent = msg;
+      toast.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    function openConfirm(title, message, onConfirm) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMessage').textContent = message;
+      confirmCallback = onConfirm;
+      document.getElementById('confirmDialog').classList.remove('hidden');
+    }
+
+    function closeConfirm() {
+      document.getElementById('confirmDialog').classList.add('hidden');
+      confirmCallback = null;
+    }
+
+    function copyText(text, successMsg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast(successMsg)).catch(() => fallbackCopy(text, successMsg));
+      } else {
+        fallbackCopy(text, successMsg);
+      }
+    }
+
+    function fallbackCopy(text, successMsg) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast(successMsg);
+      } catch (e) {
+        showToast('تعذر النسخ التلقائي');
+      }
+      document.body.removeChild(ta);
+    }
+
+    function compressImageFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 680;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+              else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/png'));
+          };
+          img.onerror = reject;
+          img.src = ev.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function getBorderForHex(hex) {
+      const found = COLOR_SWATCHES.find(c => c.hex.toLowerCase() === String(hex || '').toLowerCase());
+      return found ? found.border : '#64748b';
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function renderColorSwatchPicker(containerId, selectedHex, dataAttr) {
+      const el = document.getElementById(containerId);
+      el.innerHTML = COLOR_SWATCHES.map(c => {
+        const active = c.hex.toLowerCase() === selectedHex.toLowerCase();
+        return `<button type="button" ${dataAttr}="${c.hex}" title="${c.label}" class="w-8 h-8 rounded-full transition flex items-center justify-center ${active ? 'ring-2 ring-offset-2 ring-emerald-600 scale-110' : 'hover:scale-105'}" style="background:${c.hex};border:2px solid ${c.border}">
+          ${active ? `<span class="w-2.5 h-2.5 rounded-full ${c.hex === '#ffffff' || c.hex === '#f5f0e6' || c.hex === '#d6c3a5' ? 'bg-slate-900' : 'bg-white'}"></span>` : ''}
+        </button>`;
+      }).join('');
+    }
+
+    // ---------- Smart Combined Caption (Clean: Design Name + Size + Customer Once) ----------
+    function formatCustomerOrderCaption(order) {
+      const items = order.items;
+      const totalPieces = items.reduce((s, it) => s + it.qty, 0);
+      const uniqueSizes = [...new Set(items.map(it => it.size))];
+      const allSameSize = uniqueSizes.length === 1;
+      const allSingleQty = items.every(it => it.qty === 1);
+      const hasAnyNote = items.some(it => it.note);
+
+      const lines = [];
+      if (items.length === 1) {
+        const it = items[0];
+        lines.push(`${it.designName} — مقاس ${it.size}${it.qty > 1 ? ' × ' + it.qty : ''}`);
+        if (it.note) lines.push(`ملاحظة: ${it.note}`);
+      } else if (allSameSize && allSingleQty && !hasAnyNote) {
+        const names = items.map(it => it.designName).join(' + ');
+        lines.push(`${names}`);
+        lines.push(`المقاس للكل: ${uniqueSizes[0]} (${totalPieces} قطع)`);
+      } else {
+        items.forEach(it => {
+          const qtyStr = it.qty > 1 ? ` × ${it.qty}` : '';
+          const noteStr = it.note ? ` [${it.note}]` : '';
+          lines.push(`• ${it.designName} — مقاس ${it.size}${qtyStr}${noteStr}`);
+        });
+      }
+
+      const custLine = order.customerRef
+        ? `العميل: ${order.customerName} (${order.customerRef})`
+        : `العميل: ${order.customerName}`;
+      lines.push(custLine);
+      return lines.join('\n');
+    }
+
+    // ---------- Composite Horizontal Canvas Card Generator (1 Card Per Customer, Circle Dot Only) ----------
+    async function renderCustomerOrderCard(order) {
+      const items = order.items;
+      const count = items.length;
+      const totalPieces = items.reduce((s, it) => s + it.qty, 0);
+
+      const cols = count === 1 ? 1 : (count === 2 || count === 4 ? 2 : 3);
+      const rows = Math.ceil(count / cols);
+
+      const pad = 36;
+      const gap = 24;
+      const tileW = cols === 1 ? 760 : (cols === 2 ? 520 : 420);
+      const tileH = cols === 1 ? 660 : (cols === 2 ? 540 : 475);
+      const headerH = 148;
+
+      const W = pad * 2 + cols * tileW + (cols - 1) * gap;
+      const H = headerH + pad + rows * tileH + (rows - 1) * gap + pad;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // White Background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
+
+      // Top Customer Header Banner (Customer Name ONCE)
+      ctx.fillStyle = '#065f46';
+      ctx.fillRect(0, 0, W, headerH);
+
+      // Total Pieces Pill (Left)
+      ctx.fillStyle = '#047857';
+      roundRect(ctx, 32, 34, 210, 80, 18);
+      ctx.fill();
+      ctx.strokeStyle = '#34d399';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 34px Cairo, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(totalPieces === 1 ? 'قطعة واحدة' : `${totalPieces} قطع`, 137, 75);
+
+      // Customer Name (Right RTL)
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#a7f3d0';
+      ctx.font = '800 24px Cairo, sans-serif';
+      ctx.fillText('اسم العميل (لمطابقة بوليصة الشحن)', W - 36, 44);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 46px Cairo, sans-serif';
+      const custText = order.customerRef
+        ? `${order.customerName} (${order.customerRef})`
+        : order.customerName;
+      ctx.fillText(custText, W - 36, 100);
+
+      const loadedImages = await Promise.all(items.map(it => loadImage(it.designImage)));
+
+      for (let i = 0; i < count; i++) {
+        const it = items[i];
+        const img = loadedImages[i];
+        const row = Math.floor(i / cols);
+        const colFromRight = i % cols;
+        const colFromLeft = (cols - 1) - colFromRight;
+
+        const x = pad + colFromLeft * (tileW + gap);
+        const y = headerH + pad + row * (tileH + gap);
+
+        // Tile Box
+        ctx.fillStyle = '#f8fafc';
+        roundRect(ctx, x, y, tileW, tileH, 24);
+        ctx.fill();
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Design Image
+        const imgPad = 18;
+        const imgAreaH = tileH - 150;
+        if (img) {
+          const availW = tileW - imgPad * 2;
+          const availH = imgAreaH - imgPad * 2;
+          const ratio = Math.min(availW / img.width, availH / img.height);
+          const dw = img.width * ratio;
+          const dh = img.height * ratio;
+          ctx.drawImage(img, x + (tileW - dw) / 2, y + imgPad + (availH - dh) / 2, dw, dh);
+        }
+
+        // Sequential # Badge (Top-Right)
+        ctx.fillStyle = '#0f172a';
+        roundRect(ctx, x + tileW - 124, y + 16, 108, 50, 14);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 30px Cairo, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`#${it.designCode}`, x + tileW - 70, y + 42);
+
+        // Qty Badge (Top-Left if > 1)
+        if (it.qty > 1) {
+          ctx.fillStyle = '#dc2626';
+          roundRect(ctx, x + 16, y + 16, 94, 50, 14);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 28px Cairo, sans-serif';
+          ctx.fillText(`× ${it.qty}`, x + 63, y + 42);
+        }
+
+        // Bottom Strip (Size + Design Name + Color Dot ONLY)
+        const stripY = y + tileH - 130;
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, x + 12, stripY, tileW - 24, 118, 18);
+        ctx.fill();
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Size Highlight Box (Left of strip)
+        const sizeBoxW = cols === 3 ? 114 : 136;
+        ctx.fillStyle = '#fef3c7';
+        roundRect(ctx, x + 22, stripY + 10, sizeBoxW, 98, 16);
+        ctx.fill();
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.fillStyle = '#92400e';
+        ctx.font = '800 19px Cairo, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('المقاس', x + 22 + sizeBoxW / 2, stripY + 30);
+
+        ctx.fillStyle = '#0f172a';
+        const sizeFontPx = String(it.size || '').length > 4 ? 28 : (String(it.size || '').length > 3 ? 34 : 44);
+        ctx.font = `900 ${sizeFontPx}px Cairo, sans-serif`;
+        ctx.fillText(it.size, x + 22 + sizeBoxW / 2, stripY + 76);
+
+        // Color Circle Dot (Right side of strip — NO color word!)
+        const dotX = x + tileW - 48;
+        const dotY = stripY + (it.note ? 42 : 59);
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 20, 0, Math.PI * 2);
+        ctx.fillStyle = it.colorHex || '#111827';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#475569';
+        ctx.stroke();
+
+        // Design Label (e.g. "تصميم 1") next to dot
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = cols === 3 ? '900 32px Cairo, sans-serif' : '900 38px Cairo, sans-serif';
+        ctx.fillText(it.designName || `تصميم ${it.designCode}`, dotX - 32, dotY + 2);
+
+        // Optional Note underneath
+        if (it.note) {
+          ctx.fillStyle = '#b45309';
+          ctx.font = '800 22px Cairo, sans-serif';
+          ctx.fillText(it.note.slice(0, 22), x + tileW - 28, stripY + 92);
+        }
+      }
+
+      return canvas.toDataURL('image/png');
+    }
+
+    async function dataUrlToFile(dataUrl, filename) {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      return new File([blob], filename, { type: 'image/png' });
+    }
+
+    // ---------- Rendering Functions ----------
+    function switchTab(tabName) {
+      state.activeTab = tabName;
+      ['store', 'orders', 'library'].forEach((t) => {
+        document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tabName);
+      });
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        const active = btn.dataset.tab === tabName;
+        btn.className = active
+          ? 'tab-btn flex-1 py-2 px-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition bg-emerald-600 text-white shadow-sm'
+          : 'tab-btn flex-1 py-2 px-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition bg-slate-100 text-slate-700 hover:bg-slate-200';
+      });
+      updateCartBadges();
+      if (tabName === 'orders') renderOrdersTab();
+      if (tabName === 'library') renderLibraryTab();
+      lucide.createIcons();
+    }
+
+    function renderStoreGrid() {
+      const grid = document.getElementById('storeDesignsGrid');
+      const empty = document.getElementById('storeEmptyState');
+      const q = state.searchQuery.trim().toLowerCase();
+
+      const filtered = state.designs.filter(d =>
+        d.active !== false &&
+        (!q || d.code.toLowerCase().includes(q) || (d.name && d.name.toLowerCase().includes(q)))
+      );
+
+      if (!filtered.length) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      grid.innerHTML = filtered.map((d) => {
+        const borderCol = getBorderForHex(d.colorHex);
+        return `
+          <button type="button" data-design-id="${escapeHtml(d.id)}" class="design-card group text-right bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md hover:border-emerald-400 active:scale-[0.98] transition flex flex-col">
+            <div class="relative aspect-square w-full bg-slate-50 p-2.5 flex items-center justify-center overflow-hidden">
+              <img src="${d.image}" alt="${escapeHtml(d.name)}" class="max-w-full max-h-full object-contain rounded-xl group-hover:scale-105 transition duration-200" />
+              <span class="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-lg bg-slate-900/90 text-white text-xs font-black shadow-sm">#${escapeHtml(d.code)}</span>
+              <span class="absolute bottom-2.5 left-2.5 w-6 h-6 rounded-full shadow-sm" style="background:${d.colorHex};border:2.5px solid ${borderCol}"></span>
+            </div>
+            <div class="p-2.5 sm:p-3 flex items-center justify-between gap-1 border-t border-slate-100 w-full">
+              <div class="text-xs sm:text-sm font-extrabold text-slate-800 truncate">${escapeHtml(d.name)}</div>
+              <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+              </span>
+            </div>
+          </button>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function updateCartBadges() {
+      const totalItems = state.cart.reduce((sum, item) => sum + item.qty, 0);
+      document.getElementById('headerCartBadge').textContent = totalItems;
+      document.getElementById('floatingCartCount').textContent = totalItems;
+
+      const bar = document.getElementById('floatingCartBar');
+      if (totalItems > 0 && state.activeTab === 'store') {
+        bar.classList.remove('hidden');
+        const title = state.currentCustomerName.trim()
+          ? `سلة: ${state.currentCustomerName.trim()}`
+          : 'سلة العميل الحالي';
+        document.getElementById('floatingCartTitle').textContent = title;
+        const preview = state.cart.map(i => `${i.designName} (${i.size})`).join(' + ');
+        document.getElementById('floatingCartSummary').textContent = preview;
+      } else {
+        bar.classList.add('hidden');
+      }
+
+      document.getElementById('ordersTabBadge').textContent = state.orders.length;
+    }
+
+    function openPickerModal(designId) {
+      const design = state.designs.find(d => d.id === designId);
+      if (!design) return;
+
+      state.picker.designId = design.id;
+      state.picker.qty = 1;
+      state.picker.note = '';
+      state.picker.isCustomSize = false;
+      state.picker.customSizeText = '';
+      if (!SIZES.includes(state.picker.size)) state.picker.size = 'L';
+
+      document.getElementById('pickerImg').src = design.image;
+      document.getElementById('pickerCodeBadge').textContent = `#${design.code}`;
+      const dot = document.getElementById('pickerColorDot');
+      dot.style.background = design.colorHex;
+      dot.style.borderColor = getBorderForHex(design.colorHex);
+      document.getElementById('pickerName').textContent = design.name;
+      document.getElementById('pickerQtyVal').textContent = '1';
+      document.getElementById('pickerNoteInput').value = '';
+
+      renderSizeOptions();
+      document.getElementById('pickerModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function renderSizeOptions() {
+      const container = document.getElementById('sizeOptions');
+      const presetBtns = SIZES.map(s => {
+        const active = !state.picker.isCustomSize && state.picker.size === s;
+        return `<button type="button" data-size="${s}" class="size-opt py-3 rounded-xl text-sm font-black border transition ${active ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'}">${s}</button>`;
+      }).join('');
+
+      const customActive = state.picker.isCustomSize;
+      const customBox = `<input id="customSizeInput" type="text" maxlength="10" value="${escapeHtml(state.picker.customSizeText)}" placeholder="مقاس خاص" aria-label="مقاس خاص" class="w-full py-3 px-2 rounded-xl text-sm font-black text-center border transition focus:outline-none ${customActive ? 'bg-emerald-600 text-white placeholder:text-emerald-100 border-emerald-600 shadow-sm ring-2 ring-emerald-500/30' : 'bg-slate-50 text-slate-800 placeholder:text-slate-400 border-dashed border-slate-300 hover:border-emerald-400 focus:bg-emerald-600 focus:text-white focus:placeholder:text-emerald-100'}" />`;
+
+      container.innerHTML = presetBtns + customBox;
+    }
+
+    function openCartModal() {
+      document.getElementById('customerNameInput').value = state.currentCustomerName;
+      renderCartItems();
+      document.getElementById('cartModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function renderCartItems() {
+      const container = document.getElementById('cartItemsList');
+      if (!state.cart.length) {
+        container.className = 'grid grid-cols-1';
+        container.innerHTML = `<div class="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-xs font-bold text-slate-500">السلة فاضية — اضغط على أي تصميم لإضافته هنا</div>`;
+        return;
+      }
+
+      container.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2.5';
+      container.innerHTML = state.cart.map((item, index) => `
+        <div class="relative flex flex-col p-2 rounded-2xl border border-slate-200 bg-white">
+          <button type="button" data-remove-cart="${index}" class="absolute top-1.5 left-1.5 w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center" title="حذف">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+          <img src="${item.designImage}" alt="" class="w-full aspect-square rounded-xl object-contain bg-slate-50 p-1" />
+          <div class="mt-2 space-y-1 text-right">
+            <div class="flex items-center justify-between gap-1">
+              <div class="flex items-center gap-1 min-w-0">
+                <span class="w-3.5 h-3.5 rounded-full shrink-0" style="background:${item.colorHex};border:1.5px solid ${getBorderForHex(item.colorHex)}"></span>
+                <span class="text-xs font-extrabold text-slate-900 truncate">${escapeHtml(item.designName)}</span>
+              </div>
+              <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[11px] font-black shrink-0">${escapeHtml(item.size)}${item.qty > 1 ? ' ×' + item.qty : ''}</span>
+            </div>
+            ${item.note ? `<div class="text-[10px] font-bold text-amber-700 truncate">${escapeHtml(item.note)}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    async function renderOrdersTab() {
+      const emptyEl = document.getElementById('ordersEmptyState');
+      const grid = document.getElementById('ordersCardsGrid');
+
+      if (!state.orders.length) {
+        emptyEl.classList.remove('hidden');
+        grid.innerHTML = '';
+        return;
+      }
+
+      emptyEl.classList.add('hidden');
+
+      grid.innerHTML = state.orders.map((order, i) => {
+        const totalPieces = order.items.reduce((s, it) => s + it.qty, 0);
+        const caption = formatCustomerOrderCaption(order);
+        return `
+          <div class="print-card bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
+            <div class="bg-slate-100 p-2.5 flex items-center justify-center">
+              <img id="order-card-img-${i}" src="${order.items[0].designImage}" alt="كارت أوردر ${escapeHtml(order.customerName)}" class="w-full h-auto rounded-xl border border-slate-200 shadow-xs" />
+            </div>
+            <div class="p-3.5 border-t border-slate-100 space-y-2.5 no-print">
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="text-sm font-extrabold text-slate-900 truncate">${escapeHtml(order.customerName)} ${order.customerRef ? '<span class="text-slate-500 text-xs">(' + escapeHtml(order.customerRef) + ')</span>' : ''}</div>
+                  <div class="text-xs font-bold text-emerald-700">${totalPieces === 1 ? 'قطعة واحدة' : totalPieces + ' قطع في كارت واحد بالعرض'}</div>
+                </div>
+                <button type="button" data-delete-order="${escapeHtml(order.orderId)}" title="حذف الأوردر" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition shrink-0">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+              <pre class="text-[11px] font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-2.5 whitespace-pre-wrap leading-relaxed font-sans">${escapeHtml(caption)}</pre>
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" data-share-order="${i}" class="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 text-white text-xs font-extrabold hover:bg-emerald-700 active:scale-95 transition flex items-center justify-center gap-1.5">
+                  <i data-lucide="share-2" class="w-4 h-4"></i>
+                  <span>مشاركة للواتساب</span>
+                </button>
+                <button type="button" data-download-order="${i}" class="py-2.5 px-3 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition flex items-center gap-1" title="تحميل الصورة">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                  <span>تحميل</span>
+                </button>
+                <button type="button" data-copy-caption="${i}" class="py-2.5 px-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition flex items-center gap-1" title="نسخ النص">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span>نسخ النص</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+
+      window._latestOrderImages = [];
+      for (let i = 0; i < state.orders.length; i++) {
+        const dataUrl = await renderCustomerOrderCard(state.orders[i]);
+        window._latestOrderImages[i] = dataUrl;
+        const imgEl = document.getElementById(`order-card-img-${i}`);
+        if (imgEl) imgEl.src = dataUrl;
+      }
+    }
+
+    function renderLibraryTab() {
+      document.getElementById('libraryCount').textContent = state.designs.length;
+      renderColorSwatchPicker('newColorSwatches', state.selectedNewColorHex, 'data-new-color');
+
+      const numericCodes = state.designs.map(d => parseInt(d.code, 10)).filter(n => !isNaN(n));
+      const nextCode = numericCodes.length ? Math.max(...numericCodes) + 1 : 1;
+      const codeInput = document.getElementById('newDesignCode');
+      if (!codeInput.value) codeInput.value = String(nextCode);
+
+      document.getElementById('libraryGrid').innerHTML = state.designs.map((d) => {
+        const isActive = d.active !== false;
+        const borderCol = getBorderForHex(d.colorHex);
+        return `
+          <div class="rounded-2xl border ${isActive ? 'border-slate-200 bg-slate-50' : 'border-dashed border-slate-300 bg-slate-100/70 opacity-75'} overflow-hidden flex flex-col">
+            <div class="relative aspect-square p-2 bg-white flex items-center justify-center">
+              <img src="${d.image}" alt="" class="max-w-full max-h-full object-contain rounded-lg ${isActive ? '' : 'grayscale'}" />
+              <span class="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-slate-900 text-white text-xs font-black">#${escapeHtml(d.code)}</span>
+              <span class="absolute bottom-2 left-2 w-5 h-5 rounded-full" style="background:${d.colorHex};border:2px solid ${borderCol}"></span>
+              ${!isActive ? '<span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-black">متوقف</span>' : ''}
+            </div>
+            <div class="p-2.5 space-y-2 border-t border-slate-200">
+              <div class="text-xs font-extrabold text-slate-900 truncate">${escapeHtml(d.name)}</div>
+              <div class="flex items-center gap-1 pt-0.5">
+                <button type="button" data-edit-design="${escapeHtml(d.id)}" class="flex-1 py-1.5 px-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-extrabold transition">تعديل</button>
+                <button type="button" data-toggle-design="${escapeHtml(d.id)}" class="py-1.5 px-2 rounded-lg ${isActive ? 'bg-amber-50 text-amber-800 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'} text-[11px] font-extrabold transition">${isActive ? 'إيقاف' : 'تفعيل'}</button>
+                <button type="button" data-delete-design="${escapeHtml(d.id)}" class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition" title="حذف نهائي">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function openEditDesignModal(designId) {
+      const d = state.designs.find(item => item.id === designId);
+      if (!d) return;
+      state.selectedEditColorHex = d.colorHex || '#111827';
+      document.getElementById('editDesignId').value = d.id;
+      document.getElementById('editDesignPreview').src = d.image;
+      document.getElementById('editDesignCode').value = d.code;
+      document.getElementById('editDesignName').value = d.name;
+      document.getElementById('editDesignFile').value = '';
+      renderColorSwatchPicker('editColorSwatches', state.selectedEditColorHex, 'data-edit-color');
+      document.getElementById('editDesignModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    // ---------- Share, Download & Backup Actions ----------
+    async function shareSingleOrder(index) {
+      const order = state.orders[index];
+      if (!order) return;
+      const dataUrl = (window._latestOrderImages && window._latestOrderImages[index]) || await renderCustomerOrderCard(order);
+      const filename = `order_${order.customerName.replace(/\s+/g, '_')}.png`;
+      const caption = formatCustomerOrderCaption(order);
+
+      try {
+        const file = await dataUrlToFile(dataUrl, filename);
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: `أوردر ${order.customerName}`, text: caption });
+          return;
+        }
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+      }
+
+      triggerDownload(dataUrl, filename);
+      copyText(caption, 'تم تحميل كارت الأوردر ونسخ النص');
+    }
+
+    async function shareAllOrders() {
+      if (!state.orders.length) return;
+      const files = [];
+      for (let i = 0; i < state.orders.length; i++) {
+        const dataUrl = (window._latestOrderImages && window._latestOrderImages[i]) || await renderCustomerOrderCard(state.orders[i]);
+        const filename = `order_${i + 1}_${state.orders[i].customerName.replace(/\s+/g, '_')}.png`;
+        files.push(await dataUrlToFile(dataUrl, filename));
+      }
+
+      try {
+        if (navigator.share && navigator.canShare && navigator.canShare({ files })) {
+          await navigator.share({
+            files,
+            title: 'أوردرات اليوم',
+            text: `أوردرات اليوم (${state.orders.length} عميل)`
+          });
+          return;
+        }
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+      }
+
+      await downloadAllOrders();
+    }
+
+    async function downloadAllOrders() {
+      if (!state.orders.length) return;
+      showToast(`جاري تحميل ${state.orders.length} كارت...`);
+      for (let i = 0; i < state.orders.length; i++) {
+        const dataUrl = (window._latestOrderImages && window._latestOrderImages[i]) || await renderCustomerOrderCard(state.orders[i]);
+        const filename = `order_${i + 1}_${state.orders[i].customerName.replace(/\s+/g, '_')}.png`;
+        triggerDownload(dataUrl, filename);
+        await new Promise(r => setTimeout(r, 250));
+      }
+    }
+
+    function triggerDownload(dataUrl, filename) {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function exportDesignsBackup() {
+      const payload = JSON.stringify({ version: 3, exportedAt: new Date().toISOString(), designs: state.designs });
+      const blob = new Blob([payload], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      triggerDownload(url, `designs_backup_${new Date().toISOString().slice(0, 10)}.json`);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast('تم حفظ ملف النسخة الاحتياطية على جهازك');
+    }
+
+    // ---------- Event Wiring ----------
+    function bindEvents() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+
+      document.getElementById('goToStoreBtn').addEventListener('click', () => switchTab('store'));
+
+      document.getElementById('designSearchInput').addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        renderStoreGrid();
+      });
+      document.getElementById('quickCustomerInput').addEventListener('input', (e) => {
+        state.currentCustomerName = e.target.value;
+        updateCartBadges();
+      });
+      document.getElementById('customerNameInput').addEventListener('input', (e) => {
+        state.currentCustomerName = e.target.value;
+        document.getElementById('quickCustomerInput').value = e.target.value;
+        updateCartBadges();
+      });
+
+      document.getElementById('clearSearchBtn').addEventListener('click', () => {
+        state.searchQuery = '';
+        document.getElementById('designSearchInput').value = '';
+        renderStoreGrid();
+      });
+
+      document.getElementById('storeDesignsGrid').addEventListener('click', (e) => {
+        const card = e.target.closest('.design-card');
+        if (card) openPickerModal(card.dataset.designId);
+      });
+
+      document.getElementById('sizeOptions').addEventListener('click', (e) => {
+        const btn = e.target.closest('.size-opt');
+        if (btn) {
+          state.picker.isCustomSize = false;
+          state.picker.size = btn.dataset.size;
+          renderSizeOptions();
+        }
+      });
+
+      document.getElementById('sizeOptions').addEventListener('focusin', (e) => {
+        if (e.target && e.target.id === 'customSizeInput' && !state.picker.isCustomSize) {
+          state.picker.isCustomSize = true;
+          document.querySelectorAll('#sizeOptions .size-opt').forEach(b => {
+            b.className = 'size-opt py-3 rounded-xl text-sm font-black border transition bg-white text-slate-800 border-slate-200 hover:bg-slate-50';
+          });
+          e.target.className = 'w-full py-3 px-2 rounded-xl text-sm font-black text-center border transition focus:outline-none bg-emerald-600 text-white placeholder:text-emerald-100 border-emerald-600 shadow-sm ring-2 ring-emerald-500/30';
+        }
+      });
+
+      document.getElementById('sizeOptions').addEventListener('input', (e) => {
+        if (e.target && e.target.id === 'customSizeInput') {
+          state.picker.isCustomSize = true;
+          state.picker.customSizeText = e.target.value;
+        }
+      });
+
+      document.getElementById('qtyMinusBtn').addEventListener('click', () => {
+        if (state.picker.qty > 1) {
+          state.picker.qty--;
+          document.getElementById('pickerQtyVal').textContent = state.picker.qty;
+        }
+      });
+      document.getElementById('qtyPlusBtn').addEventListener('click', () => {
+        state.picker.qty++;
+        document.getElementById('pickerQtyVal').textContent = state.picker.qty;
+      });
+
+      document.getElementById('closePickerBtn').addEventListener('click', () => {
+        document.getElementById('pickerModal').classList.add('hidden');
+      });
+
+      document.getElementById('addToCartConfirmBtn').addEventListener('click', () => {
+        const design = state.designs.find(d => d.id === state.picker.designId);
+        if (!design) return;
+        let finalSize = state.picker.size;
+        if (state.picker.isCustomSize) {
+          const customVal = state.picker.customSizeText.trim().toUpperCase();
+          if (!customVal) {
+            const inp = document.getElementById('customSizeInput');
+            if (inp) inp.focus();
+            showToast('اكتب المقاس الخاص أولاً (مثلاً 3XL أو 4XL)');
+            return;
+          }
+          finalSize = customVal;
+        }
+        const note = document.getElementById('pickerNoteInput').value.trim();
+        state.cart.push({
+          itemId: 'it_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          designId: design.id,
+          designCode: design.code,
+          designName: design.name,
+          designImage: design.image,
+          colorHex: design.colorHex,
+          size: finalSize,
+          qty: state.picker.qty,
+          note
+        });
+        document.getElementById('pickerModal').classList.add('hidden');
+        updateCartBadges();
+        showToast(`تمت إضافة ${design.name} (${finalSize}) للسلة`);
+      });
+
+      // Cart Modal
+      document.getElementById('openCartBtn').addEventListener('click', openCartModal);
+      document.getElementById('floatingCartBtn').addEventListener('click', openCartModal);
+      document.getElementById('closeCartBtn').addEventListener('click', () => {
+        document.getElementById('cartModal').classList.add('hidden');
+      });
+      document.getElementById('addMoreItemsBtn').addEventListener('click', () => {
+        document.getElementById('cartModal').classList.add('hidden');
+        switchTab('store');
+      });
+
+      document.getElementById('cartItemsList').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-remove-cart]');
+        if (!btn) return;
+        const idx = parseInt(btn.dataset.removeCart, 10);
+        state.cart.splice(idx, 1);
+        renderCartItems();
+        updateCartBadges();
+      });
+
+      document.getElementById('confirmCustomerOrderBtn').addEventListener('click', () => {
+        if (!state.cart.length) {
+          showToast('أضف قطعة واحدة على الأقل للسلة أولاً');
+          return;
+        }
+        const nameInput = document.getElementById('customerNameInput');
+        const refInput = document.getElementById('customerRefInput');
+        const customerName = nameInput.value.trim();
+        if (!customerName) {
+          nameInput.focus();
+          showToast('اكتب اسم العميل أولاً');
+          return;
+        }
+
+        state.orders.unshift({
+          orderId: 'ord_' + Date.now(),
+          customerName,
+          customerRef: refInput.value.trim(),
+          createdAt: new Date().toISOString(),
+          items: [...state.cart]
+        });
+
+        state.cart = [];
+        state.currentCustomerName = '';
+        nameInput.value = '';
+        refInput.value = '';
+        document.getElementById('quickCustomerInput').value = '';
+        saveOrders();
+        updateCartBadges();
+        document.getElementById('cartModal').classList.add('hidden');
+        switchTab('orders');
+        showToast(`تم تجهيز كارت أوردر "${customerName}" بنجاح ✅`);
+      });
+
+      // Orders Tab Actions
+      document.getElementById('ordersCardsGrid').addEventListener('click', async (e) => {
+        const shareBtn = e.target.closest('[data-share-order]');
+        if (shareBtn) { await shareSingleOrder(parseInt(shareBtn.dataset.shareOrder, 10)); return; }
+
+        const dlBtn = e.target.closest('[data-download-order]');
+        if (dlBtn) {
+          const idx = parseInt(dlBtn.dataset.downloadOrder, 10);
+          const order = state.orders[idx];
+          if (order) {
+            const url = (window._latestOrderImages && window._latestOrderImages[idx]) || await renderCustomerOrderCard(order);
+            triggerDownload(url, `order_${order.customerName.replace(/\s+/g, '_')}.png`);
+            showToast('تم تحميل صورة الكارت');
+          }
+          return;
+        }
+
+        const copyBtn = e.target.closest('[data-copy-caption]');
+        if (copyBtn) {
+          const idx = parseInt(copyBtn.dataset.copyCaption, 10);
+          const order = state.orders[idx];
+          if (order) copyText(formatCustomerOrderCaption(order), 'تم نسخ نص الأوردر');
+          return;
+        }
+
+        const delBtn = e.target.closest('[data-delete-order]');
+        if (delBtn) {
+          const id = delBtn.dataset.deleteOrder;
+          state.orders = state.orders.filter(o => o.orderId !== id);
+          saveOrders();
+          updateCartBadges();
+          renderOrdersTab();
+          showToast('تم حذف الأوردر');
+        }
+      });
+
+      document.getElementById('shareAllImagesBtn').addEventListener('click', shareAllOrders);
+      document.getElementById('downloadAllImagesBtn').addEventListener('click', downloadAllOrders);
+      document.getElementById('printSheetBtn').addEventListener('click', () => window.print());
+
+      document.getElementById('clearOrdersBtn').addEventListener('click', () => {
+        if (!state.orders.length) return;
+        openConfirm('تصفير أوردرات اليوم', 'هل تريد مسح كل أوردرات اليوم للبدء من جديد؟', () => {
+          state.orders = [];
+          saveOrders();
+          updateCartBadges();
+          renderOrdersTab();
+          showToast('تم تصفير أوردرات اليوم');
+        });
+      });
+
+      // Swatch Pickers
+      document.getElementById('newColorSwatches').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-new-color]');
+        if (btn) {
+          state.selectedNewColorHex = btn.dataset.newColor;
+          renderColorSwatchPicker('newColorSwatches', state.selectedNewColorHex, 'data-new-color');
+        }
+      });
+      document.getElementById('editColorSwatches').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-edit-color]');
+        if (btn) {
+          state.selectedEditColorHex = btn.dataset.editColor;
+          renderColorSwatchPicker('editColorSwatches', state.selectedEditColorHex, 'data-edit-color');
+        }
+      });
+
+      // Library Tab Actions
+      document.getElementById('addDesignForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const codeInput = document.getElementById('newDesignCode');
+        const nameInput = document.getElementById('newDesignName');
+        const filesInput = document.getElementById('newDesignFiles');
+        const files = Array.from(filesInput.files || []);
+        if (!files.length) return;
+
+        let baseCodeNum = parseInt(codeInput.value.trim(), 10);
+        const rawCode = codeInput.value.trim();
+        const baseName = nameInput.value.trim();
+
+        showToast(`جاري معالجة ${files.length} تصميم...`);
+        for (let i = 0; i < files.length; i++) {
+          try {
+            const compressed = await compressImageFile(files[i]);
+            const code = !isNaN(baseCodeNum) ? String(baseCodeNum + i) : (files.length > 1 ? `${rawCode}-${i + 1}` : rawCode);
+            const finalName = baseName
+              ? (files.length > 1 ? `${baseName} ${i + 1}` : baseName)
+              : `تصميم ${code}`;
+            state.designs.unshift({
+              id: 'd_' + Date.now() + '_' + i,
+              code,
+              name: finalName,
+              colorHex: state.selectedNewColorHex,
+              active: true,
+              image: compressed
+            });
+          } catch (err) {}
+        }
+
+        saveDesigns();
+        filesInput.value = '';
+        nameInput.value = '';
+        codeInput.value = '';
+        renderStoreGrid();
+        renderLibraryTab();
+        showToast(`تمت إضافة ${files.length} تصميم للمكتبة ✅`);
+      });
+
+      document.getElementById('libraryGrid').addEventListener('click', (e) => {
+        const editBtn = e.target.closest('[data-edit-design]');
+        if (editBtn) { openEditDesignModal(editBtn.dataset.editDesign); return; }
+
+        const toggleBtn = e.target.closest('[data-toggle-design]');
+        if (toggleBtn) {
+          const d = state.designs.find(item => item.id === toggleBtn.dataset.toggleDesign);
+          if (d) {
+            d.active = d.active === false ? true : false;
+            saveDesigns();
+            renderStoreGrid();
+            renderLibraryTab();
+            showToast(d.active ? `تم تفعيل ${d.name}` : `تم إيقاف ${d.name} مؤقتاً`);
+          }
+          return;
+        }
+
+        const delBtn = e.target.closest('[data-delete-design]');
+        if (delBtn) {
+          const id = delBtn.dataset.deleteDesign;
+          const design = state.designs.find(d => d.id === id);
+          if (!design) return;
+          openConfirm('حذف التصميم نهائياً', `هل تريد حذف ${design.name} (#${design.code}) من المكتبة؟`, () => {
+            state.designs = state.designs.filter(d => d.id !== id);
+            saveDesigns();
+            renderStoreGrid();
+            renderLibraryTab();
+            showToast('تم حذف التصميم');
+          });
+        }
+      });
+
+      document.getElementById('closeEditDesignBtn').addEventListener('click', () => {
+        document.getElementById('editDesignModal').classList.add('hidden');
+      });
+
+      document.getElementById('editDesignForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editDesignId').value;
+        const d = state.designs.find(item => item.id === id);
+        if (!d) return;
+
+        d.code = document.getElementById('editDesignCode').value.trim() || d.code;
+        d.name = document.getElementById('editDesignName').value.trim() || `تصميم ${d.code}`;
+        d.colorHex = state.selectedEditColorHex;
+
+        const fileInput = document.getElementById('editDesignFile');
+        if (fileInput.files && fileInput.files[0]) {
+          try {
+            d.image = await compressImageFile(fileInput.files[0]);
+          } catch (err) {
+            showToast('تعذر قراءة الصورة الجديدة');
+          }
+        }
+
+        saveDesigns();
+        document.getElementById('editDesignModal').classList.add('hidden');
+        renderStoreGrid();
+        renderLibraryTab();
+        showToast(`تم تحديث ${d.name} ✅`);
+      });
+
+      document.getElementById('exportBackupBtn').addEventListener('click', exportDesignsBackup);
+      document.getElementById('importBackupInput').addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            const list = Array.isArray(parsed) ? parsed : parsed.designs;
+            if (!Array.isArray(list) || !list.length) {
+              showToast('ملف النسخة الاحتياطية غير صالح');
+              return;
+            }
+            state.designs = list.map(normalizeDesign);
+            saveDesigns();
+            renderStoreGrid();
+            renderLibraryTab();
+            showToast(`تم استعادة ${state.designs.length} تصميم بنجاح ✅`);
+          } catch (err) {
+            showToast('تعذر قراءة ملف النسخة الاحتياطية');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+
+      document.getElementById('resetSamplesBtn').addEventListener('click', () => {
+        openConfirm('إضافة نماذج تجريبية', 'سيتم إضافة النماذج التجريبية (تصميم 1 إلى 6) مع الحفاظ على تصميماتك الحالية.', () => {
+          const existingCodes = new Set(state.designs.map(d => d.code));
+          DEFAULT_DESIGNS.forEach(d => {
+            if (!existingCodes.has(d.code)) state.designs.push({ ...d });
+          });
+          saveDesigns();
+          renderStoreGrid();
+          renderLibraryTab();
+          showToast('تمت إضافة النماذج التجريبية');
+        });
+      });
+
+      document.getElementById('confirmCancelBtn').addEventListener('click', closeConfirm);
+      document.getElementById('confirmOkBtn').addEventListener('click', () => {
+        if (confirmCallback) confirmCallback();
+        closeConfirm();
+      });
+    }
+
+    // ---------- Init ----------
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      bindEvents();
+      renderStoreGrid();
+      updateCartBadges();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
