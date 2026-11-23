@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>مجهّز أوردرات DTF — كارت موحّد لكل عميل</title>
+  <title>مجهّز أوردرات DTF — متزامن سحابياً</title>
+  <meta name="theme-color" content="#059669" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="icon" type="image/png" href="icon-192.png" />
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <style>
@@ -28,12 +34,6 @@
       .print-card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #cbd5e1 !important; }
     }
   </style>
-  <meta name="theme-color" content="#059669" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="icon" type="image/png" href="icon-192.png" />
 </head>
 <body class="min-h-screen pb-28">
 
@@ -45,8 +45,14 @@
           <i data-lucide="printer" class="w-5 h-5"></i>
         </div>
         <div class="min-w-0">
-          <h1 class="text-base sm:text-lg font-extrabold text-slate-900 truncate">مجهّز أوردرات DTF</h1>
-          <p class="text-xs text-slate-500 truncate">كارت واحد بالعرض لكل عميل جاهز للواتساب</p>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold text-slate-900 truncate">مجهّز أوردرات DTF</h1>
+            <span id="syncStatusPill" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-extrabold shrink-0">
+              <span id="syncDot" class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              <span id="syncText">جاري الربط</span>
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 truncate">كارت واحد بالعرض لكل عميل • متزامن على كل أجهزتك</p>
         </div>
       </div>
 
@@ -80,7 +86,6 @@
 
     <!-- TAB 1: STORE (QUICK ORDER PICKER) -->
     <section id="tab-store" class="space-y-4">
-      <!-- Search & Active Customer Quick Bar -->
       <div class="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
         <div class="relative md:col-span-6">
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2"></i>
@@ -92,19 +97,16 @@
         </div>
       </div>
 
-      <!-- Designs Grid -->
       <div id="storeDesignsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4"></div>
 
-      <!-- Empty Search State -->
       <div id="storeEmptyState" class="hidden bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center">
         <p class="text-slate-600 font-bold mb-2">لا توجد تصميمات مفعّلة مطابقة للبحث</p>
         <button id="clearSearchBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800">عرض كل التصميمات</button>
       </div>
     </section>
 
-    <!-- TAB 2: TODAY'S ORDERS (ONE COMBINED HORIZONTAL CARD PER CUSTOMER) -->
+    <!-- TAB 2: TODAY'S ORDERS -->
     <section id="tab-orders" class="hidden space-y-4">
-      <!-- Top Action Bar -->
       <div class="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
         <div>
           <h2 class="text-base font-extrabold text-slate-900">أوردرات اليوم</h2>
@@ -130,7 +132,6 @@
         </div>
       </div>
 
-      <!-- Empty Orders State -->
       <div id="ordersEmptyState" class="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center no-print">
         <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
           <i data-lucide="inbox" class="w-7 h-7"></i>
@@ -140,7 +141,6 @@
         <button id="goToStoreBtn" type="button" class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition">ابدأ إضافة أول أوردر</button>
       </div>
 
-      <!-- Rendered Customer Order Cards Grid -->
       <div id="ordersCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 print-grid"></div>
     </section>
 
@@ -150,9 +150,13 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <h2 class="text-base font-extrabold text-slate-900">إضافة تصميم جديد</h2>
-            <p class="text-xs text-slate-500 mt-0.5">حدد الرقم واسم التصميم (مثلاً: تصميم 1) واختار دايرة اللون، وتقدر تعدّل أو تحذف أي تصميم في أي وقت</p>
+            <p class="text-xs text-slate-500 mt-0.5">أي تصميم تضيفه أو تعدله هنا بيتحفظ في السحابة ويظهر على كل أجهزتك تلقائياً</p>
           </div>
           <div class="flex flex-wrap gap-2">
+            <button id="pushLocalToCloudBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 text-indigo-800 border border-indigo-200 text-xs font-bold hover:bg-indigo-100 transition">
+              <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i>
+              <span>مزامنة المحلي للسحابة</span>
+            </button>
             <button id="exportBackupBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition">
               <i data-lucide="download" class="w-3.5 h-3.5"></i>
               <span>حفظ نسخة احتياطية</span>
@@ -185,7 +189,6 @@
             </div>
           </div>
 
-          <!-- Visual Color Swatch Picker (Circle Only) -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
             <div>
               <span class="block text-xs font-bold text-slate-700 mb-1.5">اختار لون الدايرة للتصميم:</span>
@@ -199,7 +202,6 @@
         </form>
       </div>
 
-      <!-- Library List -->
       <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h3 class="text-sm font-extrabold text-slate-900">كل تصميماتك (<span id="libraryCount">0</span>)</h3>
@@ -277,7 +279,7 @@
     </div>
   </div>
 
-  <!-- MODAL 2: CUSTOMER CART (HORIZONTAL SIDE-BY-SIDE ITEMS) -->
+  <!-- MODAL 2: CUSTOMER CART -->
   <div id="cartModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 no-print">
     <div class="bg-white w-full sm:max-w-xl rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col modal-enter">
       <div class="p-4 border-b border-slate-100 flex items-center justify-between">
@@ -373,8 +375,29 @@
     <span id="toastText">تم بنجاح</span>
   </div>
 
-  <script>
-    // ---------- Sample Clean Numbered Designs (No Character Names) ----------
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+    import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAKyEoTeOP6bHex5T07yiW1W6XTigNesro",
+      authDomain: "dtf-orders.firebaseapp.com",
+      databaseURL: "https://dtf-orders-default-rtdb.firebaseio.com",
+      projectId: "dtf-orders",
+      storageBucket: "dtf-orders.firebasestorage.app",
+      messagingSenderId: "145740280369",
+      appId: "1:145740280369:web:dbba32816431fd55069b10"
+    };
+
+    let db = null;
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getDatabase(app);
+    } catch (err) {
+      db = null;
+    }
+
+    // ---------- Sample Clean Numbered Designs ----------
     function makeSampleSvg(bg, accent, num) {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
         <rect width="600" height="600" rx="48" fill="${bg}"/>
@@ -404,12 +427,12 @@
     const SIZES = ['S', 'M', 'L', 'XL', '2XL'];
 
     const DEFAULT_DESIGNS = [
-      { id: 'd1', code: '1', name: 'تصميم 1', colorHex: '#111827', active: true, image: makeSampleSvg('#0f172a', '#10b981', '1') },
-      { id: 'd2', code: '2', name: 'تصميم 2', colorHex: '#ffffff', active: true, image: makeSampleSvg('#1e293b', '#ef4444', '2') },
-      { id: 'd3', code: '3', name: 'تصميم 3', colorHex: '#d6c3a5', active: true, image: makeSampleSvg('#451a03', '#d97706', '3') },
-      { id: 'd4', code: '4', name: 'تصميم 4', colorHex: '#3f6212', active: true, image: makeSampleSvg('#14532d', '#22c55e', '4') },
-      { id: 'd5', code: '5', name: 'تصميم 5', colorHex: '#1e3a8a', active: true, image: makeSampleSvg('#0c4a6e', '#38bdf8', '5') },
-      { id: 'd6', code: '6', name: 'تصميم 6', colorHex: '#f5f0e6', active: true, image: makeSampleSvg('#18181b', '#e11d48', '6') }
+      { id: 'd1', code: '1', name: 'تصميم 1', colorHex: '#111827', active: true, sortAt: 6, image: makeSampleSvg('#0f172a', '#10b981', '1') },
+      { id: 'd2', code: '2', name: 'تصميم 2', colorHex: '#ffffff', active: true, sortAt: 5, image: makeSampleSvg('#1e293b', '#ef4444', '2') },
+      { id: 'd3', code: '3', name: 'تصميم 3', colorHex: '#d6c3a5', active: true, sortAt: 4, image: makeSampleSvg('#451a03', '#d97706', '3') },
+      { id: 'd4', code: '4', name: 'تصميم 4', colorHex: '#3f6212', active: true, sortAt: 3, image: makeSampleSvg('#14532d', '#22c55e', '4') },
+      { id: 'd5', code: '5', name: 'تصميم 5', colorHex: '#1e3a8a', active: true, sortAt: 2, image: makeSampleSvg('#0c4a6e', '#38bdf8', '5') },
+      { id: 'd6', code: '6', name: 'تصميم 6', colorHex: '#f5f0e6', active: true, sortAt: 1, image: makeSampleSvg('#18181b', '#e11d48', '6') }
     ];
 
     const STORAGE_KEYS = {
@@ -440,7 +463,7 @@
     let confirmCallback = null;
     let toastTimer = null;
 
-    // ---------- Storage Helpers ----------
+    // ---------- Storage & Firebase Sync Helpers ----------
     function resolveColorHex(d) {
       if (d.colorHex) return d.colorHex;
       if (d.color) {
@@ -458,11 +481,12 @@
         name: d.name || `تصميم ${code}`,
         colorHex: resolveColorHex(d),
         active: d.active !== false,
+        sortAt: Number(d.sortAt || 0),
         image: d.image
       };
     }
 
-    function loadState() {
+    function loadLocalState() {
       try {
         const saved = localStorage.getItem(STORAGE_KEYS.designs);
         if (saved) {
@@ -486,18 +510,124 @@
       }
     }
 
-    function saveDesigns() {
+    function saveDesignsLocal() {
       try {
         localStorage.setItem(STORAGE_KEYS.designs, JSON.stringify(state.designs));
-      } catch (e) {
-        showToast('مساحة التخزين ممتلئة — استخدم "حفظ نسخة احتياطية" للاحتفاظ بالتصميمات');
-      }
+      } catch (e) {}
     }
 
-    function saveOrders() {
+    function saveOrdersLocal() {
       try {
         localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(state.orders));
       } catch (e) {}
+    }
+
+    function setSyncPill(connected) {
+      const pill = document.getElementById('syncStatusPill');
+      const dot = document.getElementById('syncDot');
+      const txt = document.getElementById('syncText');
+      if (connected) {
+        pill.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-extrabold shrink-0';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500';
+        txt.textContent = 'متزامن';
+      } else {
+        pill.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-extrabold shrink-0';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500';
+        txt.textContent = 'محلي';
+      }
+    }
+
+    async function cloudSaveDesign(design) {
+      if (!db) return;
+      try {
+        await set(ref(db, 'designs/' + design.id), design);
+      } catch (e) {
+        showToast('تعذر الحفظ في السحابة — تأكد من الإنترنت');
+      }
+    }
+
+    async function cloudDeleteDesign(id) {
+      if (!db) return;
+      try {
+        await remove(ref(db, 'designs/' + id));
+      } catch (e) {}
+    }
+
+    async function cloudSaveOrder(order) {
+      if (!db) return;
+      try {
+        await set(ref(db, 'orders/' + order.orderId), order);
+      } catch (e) {
+        showToast('تعذر مزامنة الأوردر للسحابة');
+      }
+    }
+
+    async function cloudDeleteOrder(orderId) {
+      if (!db) return;
+      try {
+        await remove(ref(db, 'orders/' + orderId));
+      } catch (e) {}
+    }
+
+    async function cloudClearOrders() {
+      if (!db) return;
+      try {
+        await remove(ref(db, 'orders'));
+      } catch (e) {}
+    }
+
+    async function pushAllLocalDesignsToCloud() {
+      if (!db) { showToast('لا يوجد اتصال بالسحابة حالياً'); return; }
+      const map = {};
+      state.designs.forEach((d, idx) => {
+        const clean = normalizeDesign(d);
+        if (!clean.sortAt) clean.sortAt = state.designs.length - idx;
+        map[clean.id] = clean;
+      });
+      await set(ref(db, 'designs'), map);
+      showToast(`تم رفع ${state.designs.length} تصميم للسحابة بنجاح ☁️`);
+    }
+
+    function initFirebaseSync() {
+      if (!db) {
+        setSyncPill(false);
+        return;
+      }
+
+      onValue(ref(db, '.info/connected'), (snap) => {
+        setSyncPill(!!snap.val());
+      });
+
+      onValue(ref(db, 'designs'), (snap) => {
+        const val = snap.val();
+        if (!val) {
+          // Empty cloud DB on first run: seed with current designs
+          const map = {};
+          state.designs.forEach((d, idx) => {
+            const clean = normalizeDesign(d);
+            if (!clean.sortAt) clean.sortAt = state.designs.length - idx;
+            map[clean.id] = clean;
+          });
+          set(ref(db, 'designs'), map).catch(() => {});
+          return;
+        }
+        const list = Object.values(val).map(normalizeDesign);
+        list.sort((a, b) => (b.sortAt || 0) - (a.sortAt || 0));
+        state.designs = list;
+        saveDesignsLocal();
+        renderStoreGrid();
+        if (state.activeTab === 'library') renderLibraryTab();
+      });
+
+      onValue(ref(db, 'orders'), (snap) => {
+        const val = snap.val();
+        const list = val ? Object.values(val) : [];
+        list.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+        state.orders = list;
+        saveOrdersLocal();
+        updateCartBadges();
+        if (state.activeTab === 'orders') renderOrdersTab();
+      });
     }
 
     // ---------- UI Helpers ----------
@@ -552,7 +682,7 @@
         reader.onload = (ev) => {
           const img = new Image();
           img.onload = () => {
-            const maxDim = 680;
+            const maxDim = 620;
             let w = img.width;
             let h = img.height;
             if (w > maxDim || h > maxDim) {
@@ -616,9 +746,9 @@
       }).join('');
     }
 
-    // ---------- Smart Combined Caption (Clean: Design Name + Size + Customer Once) ----------
+    // ---------- Smart Combined Caption ----------
     function formatCustomerOrderCaption(order) {
-      const items = order.items;
+      const items = order.items || [];
       const totalPieces = items.reduce((s, it) => s + it.qty, 0);
       const uniqueSizes = [...new Set(items.map(it => it.size))];
       const allSameSize = uniqueSizes.length === 1;
@@ -649,9 +779,9 @@
       return lines.join('\n');
     }
 
-    // ---------- Composite Horizontal Canvas Card Generator (1 Card Per Customer, Circle Dot Only) ----------
+    // ---------- Composite Horizontal Canvas Card Generator ----------
     async function renderCustomerOrderCard(order) {
-      const items = order.items;
+      const items = order.items || [];
       const count = items.length;
       const totalPieces = items.reduce((s, it) => s + it.qty, 0);
 
@@ -672,15 +802,12 @@
       canvas.height = H;
       const ctx = canvas.getContext('2d');
 
-      // White Background
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, W, H);
 
-      // Top Customer Header Banner (Customer Name ONCE)
       ctx.fillStyle = '#065f46';
       ctx.fillRect(0, 0, W, headerH);
 
-      // Total Pieces Pill (Left)
       ctx.fillStyle = '#047857';
       roundRect(ctx, 32, 34, 210, 80, 18);
       ctx.fill();
@@ -694,7 +821,6 @@
       ctx.textBaseline = 'middle';
       ctx.fillText(totalPieces === 1 ? 'قطعة واحدة' : `${totalPieces} قطع`, 137, 75);
 
-      // Customer Name (Right RTL)
       ctx.textAlign = 'right';
       ctx.fillStyle = '#a7f3d0';
       ctx.font = '800 24px Cairo, sans-serif';
@@ -719,7 +845,6 @@
         const x = pad + colFromLeft * (tileW + gap);
         const y = headerH + pad + row * (tileH + gap);
 
-        // Tile Box
         ctx.fillStyle = '#f8fafc';
         roundRect(ctx, x, y, tileW, tileH, 24);
         ctx.fill();
@@ -727,7 +852,6 @@
         ctx.lineWidth = 3;
         ctx.stroke();
 
-        // Design Image
         const imgPad = 18;
         const imgAreaH = tileH - 150;
         if (img) {
@@ -739,7 +863,6 @@
           ctx.drawImage(img, x + (tileW - dw) / 2, y + imgPad + (availH - dh) / 2, dw, dh);
         }
 
-        // Sequential # Badge (Top-Right)
         ctx.fillStyle = '#0f172a';
         roundRect(ctx, x + tileW - 124, y + 16, 108, 50, 14);
         ctx.fill();
@@ -748,7 +871,6 @@
         ctx.textAlign = 'center';
         ctx.fillText(`#${it.designCode}`, x + tileW - 70, y + 42);
 
-        // Qty Badge (Top-Left if > 1)
         if (it.qty > 1) {
           ctx.fillStyle = '#dc2626';
           roundRect(ctx, x + 16, y + 16, 94, 50, 14);
@@ -758,7 +880,6 @@
           ctx.fillText(`× ${it.qty}`, x + 63, y + 42);
         }
 
-        // Bottom Strip (Size + Design Name + Color Dot ONLY)
         const stripY = y + tileH - 130;
         ctx.fillStyle = '#ffffff';
         roundRect(ctx, x + 12, stripY, tileW - 24, 118, 18);
@@ -767,7 +888,6 @@
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Size Highlight Box (Left of strip)
         const sizeBoxW = cols === 3 ? 114 : 136;
         ctx.fillStyle = '#fef3c7';
         roundRect(ctx, x + 22, stripY + 10, sizeBoxW, 98, 16);
@@ -786,7 +906,6 @@
         ctx.font = `900 ${sizeFontPx}px Cairo, sans-serif`;
         ctx.fillText(it.size, x + 22 + sizeBoxW / 2, stripY + 76);
 
-        // Color Circle Dot (Right side of strip — NO color word!)
         const dotX = x + tileW - 48;
         const dotY = stripY + (it.note ? 42 : 59);
         ctx.beginPath();
@@ -797,13 +916,11 @@
         ctx.strokeStyle = '#475569';
         ctx.stroke();
 
-        // Design Label (e.g. "تصميم 1") next to dot
         ctx.textAlign = 'right';
         ctx.fillStyle = '#0f172a';
         ctx.font = cols === 3 ? '900 32px Cairo, sans-serif' : '900 38px Cairo, sans-serif';
         ctx.fillText(it.designName || `تصميم ${it.designCode}`, dotX - 32, dotY + 2);
 
-        // Optional Note underneath
         if (it.note) {
           ctx.fillStyle = '#b45309';
           ctx.font = '800 22px Cairo, sans-serif';
@@ -985,12 +1102,14 @@
       emptyEl.classList.add('hidden');
 
       grid.innerHTML = state.orders.map((order, i) => {
-        const totalPieces = order.items.reduce((s, it) => s + it.qty, 0);
+        const items = order.items || [];
+        const totalPieces = items.reduce((s, it) => s + it.qty, 0);
         const caption = formatCustomerOrderCaption(order);
+        const firstImg = items[0] ? items[0].designImage : '';
         return `
           <div class="print-card bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
             <div class="bg-slate-100 p-2.5 flex items-center justify-center">
-              <img id="order-card-img-${i}" src="${order.items[0].designImage}" alt="كارت أوردر ${escapeHtml(order.customerName)}" class="w-full h-auto rounded-xl border border-slate-200 shadow-xs" />
+              <img id="order-card-img-${i}" src="${firstImg}" alt="كارت أوردر ${escapeHtml(order.customerName)}" class="w-full h-auto rounded-xl border border-slate-200 shadow-xs" />
             </div>
             <div class="p-3.5 border-t border-slate-100 space-y-2.5 no-print">
               <div class="flex items-center justify-between gap-2">
@@ -1283,7 +1402,7 @@
         updateCartBadges();
       });
 
-      document.getElementById('confirmCustomerOrderBtn').addEventListener('click', () => {
+      document.getElementById('confirmCustomerOrderBtn').addEventListener('click', async () => {
         if (!state.cart.length) {
           showToast('أضف قطعة واحدة على الأقل للسلة أولاً');
           return;
@@ -1297,24 +1416,26 @@
           return;
         }
 
-        state.orders.unshift({
+        const newOrder = {
           orderId: 'ord_' + Date.now(),
           customerName,
           customerRef: refInput.value.trim(),
           createdAt: new Date().toISOString(),
           items: [...state.cart]
-        });
+        };
 
+        state.orders.unshift(newOrder);
         state.cart = [];
         state.currentCustomerName = '';
         nameInput.value = '';
         refInput.value = '';
         document.getElementById('quickCustomerInput').value = '';
-        saveOrders();
+        saveOrdersLocal();
         updateCartBadges();
         document.getElementById('cartModal').classList.add('hidden');
         switchTab('orders');
-        showToast(`تم تجهيز كارت أوردر "${customerName}" بنجاح ✅`);
+        showToast(`تم تجهيز كارت أوردر "${customerName}" ومزامنته ✅`);
+        await cloudSaveOrder(newOrder);
       });
 
       // Orders Tab Actions
@@ -1346,10 +1467,11 @@
         if (delBtn) {
           const id = delBtn.dataset.deleteOrder;
           state.orders = state.orders.filter(o => o.orderId !== id);
-          saveOrders();
+          saveOrdersLocal();
           updateCartBadges();
           renderOrdersTab();
           showToast('تم حذف الأوردر');
+          await cloudDeleteOrder(id);
         }
       });
 
@@ -1359,12 +1481,13 @@
 
       document.getElementById('clearOrdersBtn').addEventListener('click', () => {
         if (!state.orders.length) return;
-        openConfirm('تصفير أوردرات اليوم', 'هل تريد مسح كل أوردرات اليوم للبدء من جديد؟', () => {
+        openConfirm('تصفير أوردرات اليوم', 'هل تريد مسح كل أوردرات اليوم من كل الأجهزة؟', async () => {
           state.orders = [];
-          saveOrders();
+          saveOrdersLocal();
           updateCartBadges();
           renderOrdersTab();
           showToast('تم تصفير أوردرات اليوم');
+          await cloudClearOrders();
         });
       });
 
@@ -1385,6 +1508,8 @@
       });
 
       // Library Tab Actions
+      document.getElementById('pushLocalToCloudBtn').addEventListener('click', pushAllLocalDesignsToCloud);
+
       document.getElementById('addDesignForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const codeInput = document.getElementById('newDesignCode');
@@ -1397,7 +1522,7 @@
         const rawCode = codeInput.value.trim();
         const baseName = nameInput.value.trim();
 
-        showToast(`جاري معالجة ${files.length} تصميم...`);
+        showToast(`جاري حفظ ${files.length} تصميم في السحابة...`);
         for (let i = 0; i < files.length; i++) {
           try {
             const compressed = await compressImageFile(files[i]);
@@ -1405,27 +1530,30 @@
             const finalName = baseName
               ? (files.length > 1 ? `${baseName} ${i + 1}` : baseName)
               : `تصميم ${code}`;
-            state.designs.unshift({
+            const newDesign = {
               id: 'd_' + Date.now() + '_' + i,
               code,
               name: finalName,
               colorHex: state.selectedNewColorHex,
               active: true,
+              sortAt: Date.now() + i,
               image: compressed
-            });
+            };
+            state.designs.unshift(newDesign);
+            await cloudSaveDesign(newDesign);
           } catch (err) {}
         }
 
-        saveDesigns();
+        saveDesignsLocal();
         filesInput.value = '';
         nameInput.value = '';
         codeInput.value = '';
         renderStoreGrid();
         renderLibraryTab();
-        showToast(`تمت إضافة ${files.length} تصميم للمكتبة ✅`);
+        showToast(`تمت إضافة ومزامنة ${files.length} تصميم ✅`);
       });
 
-      document.getElementById('libraryGrid').addEventListener('click', (e) => {
+      document.getElementById('libraryGrid').addEventListener('click', async (e) => {
         const editBtn = e.target.closest('[data-edit-design]');
         if (editBtn) { openEditDesignModal(editBtn.dataset.editDesign); return; }
 
@@ -1434,10 +1562,11 @@
           const d = state.designs.find(item => item.id === toggleBtn.dataset.toggleDesign);
           if (d) {
             d.active = d.active === false ? true : false;
-            saveDesigns();
+            saveDesignsLocal();
             renderStoreGrid();
             renderLibraryTab();
             showToast(d.active ? `تم تفعيل ${d.name}` : `تم إيقاف ${d.name} مؤقتاً`);
+            await cloudSaveDesign(d);
           }
           return;
         }
@@ -1447,12 +1576,13 @@
           const id = delBtn.dataset.deleteDesign;
           const design = state.designs.find(d => d.id === id);
           if (!design) return;
-          openConfirm('حذف التصميم نهائياً', `هل تريد حذف ${design.name} (#${design.code}) من المكتبة؟`, () => {
+          openConfirm('حذف التصميم نهائياً', `هل تريد حذف ${design.name} (#${design.code}) من كل الأجهزة؟`, async () => {
             state.designs = state.designs.filter(d => d.id !== id);
-            saveDesigns();
+            saveDesignsLocal();
             renderStoreGrid();
             renderLibraryTab();
             showToast('تم حذف التصميم');
+            await cloudDeleteDesign(id);
           });
         }
       });
@@ -1480,11 +1610,12 @@
           }
         }
 
-        saveDesigns();
+        saveDesignsLocal();
         document.getElementById('editDesignModal').classList.add('hidden');
         renderStoreGrid();
         renderLibraryTab();
-        showToast(`تم تحديث ${d.name} ✅`);
+        showToast(`تم تحديث ومزامنة ${d.name} ✅`);
+        await cloudSaveDesign(d);
       });
 
       document.getElementById('exportBackupBtn').addEventListener('click', exportDesignsBackup);
@@ -1492,7 +1623,7 @@
         const file = e.target.files && e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = async (ev) => {
           try {
             const parsed = JSON.parse(ev.target.result);
             const list = Array.isArray(parsed) ? parsed : parsed.designs;
@@ -1501,10 +1632,10 @@
               return;
             }
             state.designs = list.map(normalizeDesign);
-            saveDesigns();
+            saveDesignsLocal();
             renderStoreGrid();
             renderLibraryTab();
-            showToast(`تم استعادة ${state.designs.length} تصميم بنجاح ✅`);
+            await pushAllLocalDesignsToCloud();
           } catch (err) {
             showToast('تعذر قراءة ملف النسخة الاحتياطية');
           }
@@ -1514,12 +1645,16 @@
       });
 
       document.getElementById('resetSamplesBtn').addEventListener('click', () => {
-        openConfirm('إضافة نماذج تجريبية', 'سيتم إضافة النماذج التجريبية (تصميم 1 إلى 6) مع الحفاظ على تصميماتك الحالية.', () => {
+        openConfirm('إضافة نماذج تجريبية', 'سيتم إضافة النماذج التجريبية (تصميم 1 إلى 6) مع الحفاظ على تصميماتك الحالية.', async () => {
           const existingCodes = new Set(state.designs.map(d => d.code));
-          DEFAULT_DESIGNS.forEach(d => {
-            if (!existingCodes.has(d.code)) state.designs.push({ ...d });
-          });
-          saveDesigns();
+          for (const d of DEFAULT_DESIGNS) {
+            if (!existingCodes.has(d.code)) {
+              const item = { ...d };
+              state.designs.push(item);
+              await cloudSaveDesign(item);
+            }
+          }
+          saveDesignsLocal();
           renderStoreGrid();
           renderLibraryTab();
           showToast('تمت إضافة النماذج التجريبية');
@@ -1535,11 +1670,12 @@
 
     // ---------- Init ----------
     window.addEventListener('DOMContentLoaded', () => {
-      loadState();
+      loadLocalState();
       bindEvents();
       renderStoreGrid();
       updateCartBadges();
       lucide.createIcons();
+      initFirebaseSync();
       if ('serviceWorker' in navigator && location.protocol === 'https:') {
         try { navigator.serviceWorker.register('./sw.js'); } catch (e) {}
       }
