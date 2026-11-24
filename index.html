@@ -52,7 +52,7 @@
               <span id="syncText">جاري الربط</span>
             </span>
           </div>
-          <p class="text-xs text-slate-500 truncate">كارت واحد بالعرض لكل عميل • متزامن على كل أجهزتك</p>
+          <p class="text-xs text-slate-500 truncate">كارت واحد بالعرض لكل عميل • مزامنة ذكية سريعة</p>
         </div>
       </div>
 
@@ -150,12 +150,12 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <h2 class="text-base font-extrabold text-slate-900">إضافة تصميم جديد</h2>
-            <p class="text-xs text-slate-500 mt-0.5">أي تصميم تضيفه أو تعدله هنا بيتحفظ في السحابة ويظهر على كل أجهزتك تلقائياً</p>
+            <p class="text-xs text-slate-500 mt-0.5">التصميمات محفوظة على جهازك ومزامنة بذكاء (بتحمل الجديد فقط بدون استهلاك باقة)</p>
           </div>
           <div class="flex flex-wrap gap-2">
             <button id="pushLocalToCloudBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 text-indigo-800 border border-indigo-200 text-xs font-bold hover:bg-indigo-100 transition">
               <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i>
-              <span>مزامنة المحلي للسحابة</span>
+              <span>مزامنة للسحابة</span>
             </button>
             <button id="exportBackupBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition">
               <i data-lucide="download" class="w-3.5 h-3.5"></i>
@@ -377,7 +377,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
-    import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-database.js";
+    import { getDatabase, ref, set, get, remove, onValue } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAKyEoTeOP6bHex5T07yiW1W6XTigNesro",
@@ -427,18 +427,73 @@
     const SIZES = ['S', 'M', 'L', 'XL', '2XL'];
 
     const DEFAULT_DESIGNS = [
-      { id: 'd1', code: '1', name: 'تصميم 1', colorHex: '#111827', active: true, sortAt: 6, image: makeSampleSvg('#0f172a', '#10b981', '1') },
-      { id: 'd2', code: '2', name: 'تصميم 2', colorHex: '#ffffff', active: true, sortAt: 5, image: makeSampleSvg('#1e293b', '#ef4444', '2') },
-      { id: 'd3', code: '3', name: 'تصميم 3', colorHex: '#d6c3a5', active: true, sortAt: 4, image: makeSampleSvg('#451a03', '#d97706', '3') },
-      { id: 'd4', code: '4', name: 'تصميم 4', colorHex: '#3f6212', active: true, sortAt: 3, image: makeSampleSvg('#14532d', '#22c55e', '4') },
-      { id: 'd5', code: '5', name: 'تصميم 5', colorHex: '#1e3a8a', active: true, sortAt: 2, image: makeSampleSvg('#0c4a6e', '#38bdf8', '5') },
-      { id: 'd6', code: '6', name: 'تصميم 6', colorHex: '#f5f0e6', active: true, sortAt: 1, image: makeSampleSvg('#18181b', '#e11d48', '6') }
+      { id: 'd1', code: '1', name: 'تصميم 1', colorHex: '#111827', active: true, sortAt: 6, imageUpdatedAt: 1, image: makeSampleSvg('#0f172a', '#10b981', '1') },
+      { id: 'd2', code: '2', name: 'تصميم 2', colorHex: '#ffffff', active: true, sortAt: 5, imageUpdatedAt: 1, image: makeSampleSvg('#1e293b', '#ef4444', '2') },
+      { id: 'd3', code: '3', name: 'تصميم 3', colorHex: '#d6c3a5', active: true, sortAt: 4, imageUpdatedAt: 1, image: makeSampleSvg('#451a03', '#d97706', '3') },
+      { id: 'd4', code: '4', name: 'تصميم 4', colorHex: '#3f6212', active: true, sortAt: 3, imageUpdatedAt: 1, image: makeSampleSvg('#14532d', '#22c55e', '4') },
+      { id: 'd5', code: '5', name: 'تصميم 5', colorHex: '#1e3a8a', active: true, sortAt: 2, imageUpdatedAt: 1, image: makeSampleSvg('#0c4a6e', '#38bdf8', '5') },
+      { id: 'd6', code: '6', name: 'تصميم 6', colorHex: '#f5f0e6', active: true, sortAt: 1, imageUpdatedAt: 1, image: makeSampleSvg('#18181b', '#e11d48', '6') }
     ];
 
-    const STORAGE_KEYS = {
+    const LEGACY_KEYS = {
       designs: 'pod_dtf_designs_v3',
       orders: 'pod_dtf_orders_v3'
     };
+
+    // ---------- IndexedDB Cache (No 5MB Quota Limit — Instant Startup!) ----------
+    const IDB_NAME = 'dtf_orders_cache_db';
+    const IDB_STORE = 'kv';
+    let idbPromise = null;
+
+    function openIDB() {
+      if (idbPromise) return idbPromise;
+      idbPromise = new Promise((resolve) => {
+        try {
+          const req = indexedDB.open(IDB_NAME, 1);
+          req.onupgradeneeded = () => {
+            const database = req.result;
+            if (!database.objectStoreNames.contains(IDB_STORE)) {
+              database.createObjectStore(IDB_STORE);
+            }
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+      return idbPromise;
+    }
+
+    async function idbGet(key) {
+      const database = await openIDB();
+      if (!database) return null;
+      return new Promise((resolve) => {
+        try {
+          const tx = database.transaction(IDB_STORE, 'readonly');
+          const req = tx.objectStore(IDB_STORE).get(key);
+          req.onsuccess = () => resolve(req.result ?? null);
+          req.onerror = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function idbSet(key, value) {
+      const database = await openIDB();
+      if (!database) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = database.transaction(IDB_STORE, 'readwrite');
+          tx.objectStore(IDB_STORE).put(value, key);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        } catch (e) {
+          resolve();
+        }
+      });
+    }
 
     // ---------- App State ----------
     let state = {
@@ -463,7 +518,7 @@
     let confirmCallback = null;
     let toastTimer = null;
 
-    // ---------- Storage & Firebase Sync Helpers ----------
+    // ---------- Storage & Smart Delta Sync Helpers ----------
     function resolveColorHex(d) {
       if (d.colorHex) return d.colorHex;
       if (d.color) {
@@ -482,44 +537,61 @@
         colorHex: resolveColorHex(d),
         active: d.active !== false,
         sortAt: Number(d.sortAt || 0),
+        imageUpdatedAt: Number(d.imageUpdatedAt || 1),
         image: d.image
       };
     }
 
-    function loadLocalState() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEYS.designs);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          state.designs = Array.isArray(parsed) && parsed.length ? parsed.map(normalizeDesign) : [...DEFAULT_DESIGNS];
-        } else {
+    function extractDesignMeta(d) {
+      return {
+        id: d.id,
+        code: d.code,
+        name: d.name,
+        colorHex: d.colorHex,
+        active: d.active !== false,
+        sortAt: Number(d.sortAt || 0),
+        imageUpdatedAt: Number(d.imageUpdatedAt || 1)
+      };
+    }
+
+    async function loadLocalState() {
+      const cachedDesigns = await idbGet('designs');
+      if (Array.isArray(cachedDesigns) && cachedDesigns.length) {
+        state.designs = cachedDesigns.map(normalizeDesign);
+      } else {
+        try {
+          const legacy = localStorage.getItem(LEGACY_KEYS.designs);
+          if (legacy) {
+            const parsed = JSON.parse(legacy);
+            state.designs = Array.isArray(parsed) && parsed.length ? parsed.map(normalizeDesign) : [...DEFAULT_DESIGNS];
+          } else {
+            state.designs = [...DEFAULT_DESIGNS];
+          }
+        } catch (e) {
           state.designs = [...DEFAULT_DESIGNS];
         }
-      } catch (e) {
-        state.designs = [...DEFAULT_DESIGNS];
+        await idbSet('designs', state.designs);
       }
 
-      try {
-        const savedOrders = localStorage.getItem(STORAGE_KEYS.orders);
-        if (savedOrders) {
-          const parsed = JSON.parse(savedOrders);
-          state.orders = Array.isArray(parsed) ? parsed : [];
+      const cachedOrders = await idbGet('orders');
+      if (Array.isArray(cachedOrders)) {
+        state.orders = cachedOrders;
+      } else {
+        try {
+          const legacyOrd = localStorage.getItem(LEGACY_KEYS.orders);
+          state.orders = legacyOrd ? (JSON.parse(legacyOrd) || []) : [];
+        } catch (e) {
+          state.orders = [];
         }
-      } catch (e) {
-        state.orders = [];
       }
     }
 
     function saveDesignsLocal() {
-      try {
-        localStorage.setItem(STORAGE_KEYS.designs, JSON.stringify(state.designs));
-      } catch (e) {}
+      idbSet('designs', state.designs);
     }
 
     function saveOrdersLocal() {
-      try {
-        localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(state.orders));
-      } catch (e) {}
+      idbSet('orders', state.orders);
     }
 
     function setSyncPill(connected) {
@@ -537,10 +609,13 @@
       }
     }
 
-    async function cloudSaveDesign(design) {
+    async function cloudSaveDesign(design, imageChanged = true) {
       if (!db) return;
       try {
-        await set(ref(db, 'designs/' + design.id), design);
+        if (imageChanged) {
+          await set(ref(db, 'designs/' + design.id), design);
+        }
+        await set(ref(db, 'designs_meta/' + design.id), extractDesignMeta(design));
       } catch (e) {
         showToast('تعذر الحفظ في السحابة — تأكد من الإنترنت');
       }
@@ -549,7 +624,10 @@
     async function cloudDeleteDesign(id) {
       if (!db) return;
       try {
-        await remove(ref(db, 'designs/' + id));
+        await Promise.all([
+          remove(ref(db, 'designs/' + id)),
+          remove(ref(db, 'designs_meta/' + id))
+        ]);
       } catch (e) {}
     }
 
@@ -578,14 +656,57 @@
 
     async function pushAllLocalDesignsToCloud() {
       if (!db) { showToast('لا يوجد اتصال بالسحابة حالياً'); return; }
-      const map = {};
+      const fullMap = {};
+      const metaMap = {};
       state.designs.forEach((d, idx) => {
         const clean = normalizeDesign(d);
         if (!clean.sortAt) clean.sortAt = state.designs.length - idx;
-        map[clean.id] = clean;
+        fullMap[clean.id] = clean;
+        metaMap[clean.id] = extractDesignMeta(clean);
       });
-      await set(ref(db, 'designs'), map);
+      await set(ref(db, 'designs'), fullMap);
+      await set(ref(db, 'designs_meta'), metaMap);
       showToast(`تم رفع ${state.designs.length} تصميم للسحابة بنجاح ☁️`);
+    }
+
+    async function syncFromDesignsMeta(metaObj) {
+      const localMap = new Map(state.designs.map(d => [d.id, d]));
+      const metaList = Object.values(metaObj);
+
+      // Fetch ONLY designs whose image is missing locally or whose imageUpdatedAt changed
+      const toFetch = metaList.filter(m => {
+        const local = localMap.get(m.id);
+        if (!local || !local.image) return true;
+        return Number(local.imageUpdatedAt || 1) !== Number(m.imageUpdatedAt || 1);
+      });
+
+      const fetchedImages = new Map();
+      if (toFetch.length > 0) {
+        await Promise.all(toFetch.map(async (m) => {
+          try {
+            const snap = await get(ref(db, 'designs/' + m.id));
+            if (snap.exists()) {
+              fetchedImages.set(m.id, snap.val());
+            }
+          } catch (e) {}
+        }));
+      }
+
+      const merged = metaList.map(m => {
+        const fetched = fetchedImages.get(m.id);
+        if (fetched) return normalizeDesign(fetched);
+        const local = localMap.get(m.id);
+        return normalizeDesign({
+          ...m,
+          image: local ? local.image : ''
+        });
+      }).filter(d => d.image);
+
+      merged.sort((a, b) => (b.sortAt || 0) - (a.sortAt || 0));
+      state.designs = merged;
+      saveDesignsLocal();
+      renderStoreGrid();
+      if (state.activeTab === 'library') renderLibraryTab();
     }
 
     function initFirebaseSync() {
@@ -598,25 +719,31 @@
         setSyncPill(!!snap.val());
       });
 
-      onValue(ref(db, 'designs'), (snap) => {
-        const val = snap.val();
-        if (!val) {
-          // Empty cloud DB on first run: seed with current designs
-          const map = {};
-          state.designs.forEach((d, idx) => {
-            const clean = normalizeDesign(d);
-            if (!clean.sortAt) clean.sortAt = state.designs.length - idx;
-            map[clean.id] = clean;
-          });
-          set(ref(db, 'designs'), map).catch(() => {});
+      // Listen ONLY to tiny designs_meta (~3KB total) instead of downloading all images every open!
+      onValue(ref(db, 'designs_meta'), async (metaSnap) => {
+        const metaVal = metaSnap.val();
+        if (metaVal) {
+          await syncFromDesignsMeta(metaVal);
           return;
         }
-        const list = Object.values(val).map(normalizeDesign);
-        list.sort((a, b) => (b.sortAt || 0) - (a.sortAt || 0));
-        state.designs = list;
-        saveDesignsLocal();
-        renderStoreGrid();
-        if (state.activeTab === 'library') renderLibraryTab();
+
+        // One-time migration from existing 'designs' node if 'designs_meta' does not exist yet
+        try {
+          const fullSnap = await get(ref(db, 'designs'));
+          if (fullSnap.exists()) {
+            const list = Object.values(fullSnap.val()).map(normalizeDesign);
+            list.sort((a, b) => (b.sortAt || 0) - (a.sortAt || 0));
+            state.designs = list;
+            saveDesignsLocal();
+            renderStoreGrid();
+            if (state.activeTab === 'library') renderLibraryTab();
+            const metaMap = {};
+            list.forEach(d => { metaMap[d.id] = extractDesignMeta(d); });
+            set(ref(db, 'designs_meta'), metaMap).catch(() => {});
+          } else {
+            await pushAllLocalDesignsToCloud();
+          }
+        } catch (e) {}
       });
 
       onValue(ref(db, 'orders'), (snap) => {
@@ -682,7 +809,7 @@
         reader.onload = (ev) => {
           const img = new Image();
           img.onload = () => {
-            const maxDim = 620;
+            const maxDim = 560;
             let w = img.width;
             let h = img.height;
             if (w > maxDim || h > maxDim) {
@@ -694,7 +821,13 @@
             canvas.height = h;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/png'));
+            // Use WebP (small size + transparency) with JPEG fallback
+            const webp = canvas.toDataURL('image/webp', 0.82);
+            if (webp.startsWith('data:image/webp')) {
+              resolve(webp);
+            } else {
+              resolve(canvas.toDataURL('image/jpeg', 0.84));
+            }
           };
           img.onerror = reject;
           img.src = ev.target.result;
@@ -1269,7 +1402,7 @@
     }
 
     function exportDesignsBackup() {
-      const payload = JSON.stringify({ version: 3, exportedAt: new Date().toISOString(), designs: state.designs });
+      const payload = JSON.stringify({ version: 4, exportedAt: new Date().toISOString(), designs: state.designs });
       const blob = new Blob([payload], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       triggerDownload(url, `designs_backup_${new Date().toISOString().slice(0, 10)}.json`);
@@ -1530,17 +1663,19 @@
             const finalName = baseName
               ? (files.length > 1 ? `${baseName} ${i + 1}` : baseName)
               : `تصميم ${code}`;
+            const now = Date.now() + i;
             const newDesign = {
-              id: 'd_' + Date.now() + '_' + i,
+              id: 'd_' + now,
               code,
               name: finalName,
               colorHex: state.selectedNewColorHex,
               active: true,
-              sortAt: Date.now() + i,
+              sortAt: now,
+              imageUpdatedAt: now,
               image: compressed
             };
             state.designs.unshift(newDesign);
-            await cloudSaveDesign(newDesign);
+            await cloudSaveDesign(newDesign, true);
           } catch (err) {}
         }
 
@@ -1566,7 +1701,7 @@
             renderStoreGrid();
             renderLibraryTab();
             showToast(d.active ? `تم تفعيل ${d.name}` : `تم إيقاف ${d.name} مؤقتاً`);
-            await cloudSaveDesign(d);
+            await cloudSaveDesign(d, false);
           }
           return;
         }
@@ -1601,10 +1736,13 @@
         d.name = document.getElementById('editDesignName').value.trim() || `تصميم ${d.code}`;
         d.colorHex = state.selectedEditColorHex;
 
+        let imageChanged = false;
         const fileInput = document.getElementById('editDesignFile');
         if (fileInput.files && fileInput.files[0]) {
           try {
             d.image = await compressImageFile(fileInput.files[0]);
+            d.imageUpdatedAt = Date.now();
+            imageChanged = true;
           } catch (err) {
             showToast('تعذر قراءة الصورة الجديدة');
           }
@@ -1615,7 +1753,7 @@
         renderStoreGrid();
         renderLibraryTab();
         showToast(`تم تحديث ومزامنة ${d.name} ✅`);
-        await cloudSaveDesign(d);
+        await cloudSaveDesign(d, imageChanged);
       });
 
       document.getElementById('exportBackupBtn').addEventListener('click', exportDesignsBackup);
@@ -1631,7 +1769,11 @@
               showToast('ملف النسخة الاحتياطية غير صالح');
               return;
             }
-            state.designs = list.map(normalizeDesign);
+            const now = Date.now();
+            state.designs = list.map((item, idx) => normalizeDesign({
+              ...item,
+              imageUpdatedAt: now + idx
+            }));
             saveDesignsLocal();
             renderStoreGrid();
             renderLibraryTab();
@@ -1651,7 +1793,7 @@
             if (!existingCodes.has(d.code)) {
               const item = { ...d };
               state.designs.push(item);
-              await cloudSaveDesign(item);
+              await cloudSaveDesign(item, true);
             }
           }
           saveDesignsLocal();
@@ -1669,9 +1811,9 @@
     }
 
     // ---------- Init ----------
-    window.addEventListener('DOMContentLoaded', () => {
-      loadLocalState();
+    window.addEventListener('DOMContentLoaded', async () => {
       bindEvents();
+      await loadLocalState();
       renderStoreGrid();
       updateCartBadges();
       lucide.createIcons();
